@@ -1,0 +1,24 @@
+---
+description: Agent do frontend Next — flashcards web
+globs: "**/*"
+alwaysApply: true
+---
+
+# Web Agent
+
+1. Siga `AGENTS.md` e `arquitetura.md`.
+2. HTTP apenas via `src/lib/api.ts`.
+3. Sem OpenAI/PDF no browser; sem secrets.
+4. Client components para upload, poll e estudo.
+5. Tokens de cor em `globals.css`; evitar visual genérico de IA.
+6. Manter poll enquanto `status === 'processing'`.
+7. Atualizar tipos em `api.ts` quando o contrato Nest mudar.
+
+```tsx
+// ✅
+await uploadPdf(file);
+await listDecks();
+
+// ❌ fetch espalhado nas páginas sem tipagem
+await fetch('http://localhost:3001/decks/upload', ...);
+```
