@@ -2,6 +2,8 @@
 
 Você é o agente especialista do **frontend** flashcards. Escopo: este repositório.
 
+Para melhorias de interface, hierarquia visual, feedback e acessibilidade, use também `UX-AGENTS.md` (agent de UX).
+
 ## Antes de codar
 
 1. Leia `arquitetura.md`.

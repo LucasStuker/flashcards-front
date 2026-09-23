@@ -58,14 +58,15 @@ Regras:
 
 ### Home
 1. Lista decks ao montar.
-2. Poll a cada 2s enquanto houver deck `processing`.
-3. Upload por input ou drag-and-drop.
+2. Poll a cada 2s enquanto houver deck `processing` (feedback vivo na UI).
+3. Upload por input ou drag-and-drop (label acessível + estado enviando).
 4. Mostra status, método (`IA OpenAI` / `heurística`) e `generationNote` se houver.
+5. CTA Estudar só quando `ready`.
 
 ### Estudo
 1. Carrega deck + cards.
-2. Card clicável (frente/verso).
-3. Ratings chamam `PATCH /flashcards/:id/review` e avançam índice.
+2. Card clicável (frente/verso) com motion leve; progresso textual + barra.
+3. Ratings aparecem após revelar o verso; chamam `PATCH /flashcards/:id/review` e avançam índice.
 
 ## Design system (MVP)
 

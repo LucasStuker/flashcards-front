@@ -6,7 +6,7 @@ import { Deck, listDecks, uploadPdf } from "../lib/api";
 
 function statusLabel(status: Deck["status"]) {
   if (status === "ready") return "Pronto";
-  if (status === "processing") return "Gerando…";
+  if (status === "processing") return "Gerando cards…";
   return "Erro";
 }
 
@@ -39,17 +39,22 @@ export default function HomePage() {
     void refresh();
   }, [refresh]);
 
+  const hasProcessing = decks.some((d) => d.status === "processing");
+
   useEffect(() => {
-    const hasProcessing = decks.some((d) => d.status === "processing");
     if (!hasProcessing) return;
     const id = window.setInterval(() => {
       void refresh();
     }, 2000);
     return () => window.clearInterval(id);
-  }, [decks, refresh]);
+  }, [hasProcessing, refresh]);
 
   async function handleFile(file: File | null) {
     if (!file) return;
+    if (file.type !== "application/pdf" && !file.name.toLowerCase().endsWith(".pdf")) {
+      setError("Envie um arquivo PDF.");
+      return;
+    }
     setUploading(true);
     setError(null);
     try {
@@ -63,24 +68,24 @@ export default function HomePage() {
   }
 
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-5xl flex-col gap-10 px-6 py-10">
-      <header className="flex flex-col gap-3">
-        <p className="text-sm font-medium tracking-[0.18em] text-accent uppercase">
-          DataPrev 2026
-        </p>
+    <main className="mx-auto flex min-h-screen w-full max-w-5xl flex-col gap-12 px-6 py-12">
+      <header className="flex max-w-2xl flex-col gap-4">
         <h1
-          className="max-w-2xl text-4xl leading-tight text-ink md:text-5xl"
+          className="text-5xl leading-[1.05] tracking-tight text-ink md:text-6xl"
           style={{ fontFamily: "var(--font-display), sans-serif" }}
         >
-          Flashcards a partir do PDF do Estratégia
+          Flashcards
         </h1>
-        <p className="max-w-xl text-base text-muted">
-          Envie uma aula em PDF. O sistema extrai o texto, gera cards e você
-          estuda com repetição espaçada simples.
+        <p className="text-lg text-muted md:text-xl">
+          Do PDF do Estratégia para o estudo com repetição espaçada.
+        </p>
+        <p className="text-sm font-medium tracking-[0.14em] text-accent uppercase">
+          DataPrev 2026
         </p>
       </header>
 
       <section
+        aria-labelledby="upload-heading"
         onDragOver={(e) => {
           e.preventDefault();
           setDragOver(true);
@@ -91,62 +96,94 @@ export default function HomePage() {
           setDragOver(false);
           void handleFile(e.dataTransfer.files?.[0] ?? null);
         }}
-        className={`border border-dashed px-6 py-10 transition ${
-          dragOver ? "border-accent bg-panel" : "border-line bg-panel/70"
+        className={`border border-dashed px-6 py-10 transition duration-200 ${
+          dragOver
+            ? "border-accent bg-panel"
+            : uploading
+              ? "border-accent/50 bg-panel"
+              : "border-line bg-panel/70"
         }`}
       >
-        <div className="flex flex-col items-start gap-4 md:flex-row md:items-center md:justify-between">
+        <div className="flex flex-col items-start gap-5 md:flex-row md:items-center md:justify-between">
           <div>
             <h2
+              id="upload-heading"
               className="text-xl text-ink"
               style={{ fontFamily: "var(--font-display), sans-serif" }}
             >
-              Upload do PDF
+              Envie o PDF da aula
             </h2>
             <p className="mt-1 text-sm text-muted">
-              Arraste o arquivo ou escolha no computador (máx. 40 MB).
+              Arraste o arquivo aqui ou selecione no computador (máx. 40 MB).
             </p>
+            {uploading ? (
+              <p className="mt-3 text-sm font-medium text-accent" aria-live="polite">
+                Enviando PDF…
+              </p>
+            ) : null}
           </div>
-          <label className="cursor-pointer bg-accent px-5 py-3 text-sm font-semibold text-white transition hover:bg-accent-deep">
+          <label
+            htmlFor="pdf-upload"
+            className={`inline-flex cursor-pointer bg-accent px-5 py-3 text-sm font-semibold text-white transition duration-200 hover:bg-accent-deep focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-accent ${
+              uploading ? "pointer-events-none opacity-70" : ""
+            }`}
+          >
             {uploading ? "Enviando…" : "Selecionar PDF"}
             <input
+              id="pdf-upload"
               type="file"
               accept="application/pdf,.pdf"
-              className="hidden"
+              className="sr-only"
               disabled={uploading}
-              onChange={(e) => void handleFile(e.target.files?.[0] ?? null)}
+              onChange={(e) => {
+                void handleFile(e.target.files?.[0] ?? null);
+                e.target.value = "";
+              }}
             />
           </label>
         </div>
       </section>
 
       {error ? (
-        <p className="border border-bad/30 bg-bad/5 px-4 py-3 text-sm text-bad">
+        <p
+          role="alert"
+          className="border border-bad/30 bg-bad/5 px-4 py-3 text-sm text-bad"
+        >
           {error}
         </p>
       ) : null}
 
-      <section className="flex flex-col gap-4">
-        <div className="flex items-end justify-between gap-4">
-          <h2
-            className="text-2xl text-ink"
-            style={{ fontFamily: "var(--font-display), sans-serif" }}
-          >
-            Seus decks
-          </h2>
+      <section className="flex flex-col gap-4" aria-labelledby="decks-heading">
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <h2
+              id="decks-heading"
+              className="text-2xl text-ink"
+              style={{ fontFamily: "var(--font-display), sans-serif" }}
+            >
+              Seus decks
+            </h2>
+            {hasProcessing ? (
+              <p className="mt-1 text-sm text-warn" aria-live="polite">
+                Gerando cards — atualizando a cada 2s…
+              </p>
+            ) : null}
+          </div>
           <button
             type="button"
             onClick={() => void refresh()}
-            className="text-sm font-medium text-accent hover:text-accent-deep"
+            className="text-sm font-medium text-accent transition hover:text-accent-deep"
           >
             Atualizar
           </button>
         </div>
 
         {loading ? (
-          <p className="text-sm text-muted">Carregando…</p>
+          <p className="text-sm text-muted" aria-live="polite">
+            Carregando decks…
+          </p>
         ) : decks.length === 0 ? (
-          <p className="border border-line bg-panel px-4 py-6 text-sm text-muted">
+          <p className="border border-line bg-panel px-5 py-8 text-sm text-muted">
             Nenhum deck ainda. Envie o PDF da Aula 00 para começar.
           </p>
         ) : (
@@ -154,7 +191,7 @@ export default function HomePage() {
             {decks.map((deck) => (
               <li
                 key={deck._id}
-                className="border border-line bg-panel px-5 py-4 transition hover:border-accent/40"
+                className="border border-line bg-panel px-5 py-4 transition duration-200 hover:border-accent/40"
               >
                 <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                   <div className="min-w-0">
@@ -164,23 +201,29 @@ export default function HomePage() {
                     <p className="mt-1 text-sm text-muted">
                       {deck.subject ? `${deck.subject} · ` : ""}
                       {deck.cardCount} cards ·{" "}
-                      <span className={statusClass(deck.status)}>
+                      <span className={`font-medium ${statusClass(deck.status)}`}>
                         {statusLabel(deck.status)}
                       </span>
                       {deck.generationMethod
                         ? ` · ${deck.generationMethod === "openai" ? "IA OpenAI" : "heurística"}`
                         : ""}
-                      {deck.generationNote ? ` — ${deck.generationNote}` : ""}
-                      {deck.errorMessage ? ` — ${deck.errorMessage}` : ""}
                     </p>
+                    {deck.generationNote ? (
+                      <p className="mt-1 text-sm text-muted">{deck.generationNote}</p>
+                    ) : null}
+                    {deck.errorMessage ? (
+                      <p className="mt-1 text-sm text-bad">{deck.errorMessage}</p>
+                    ) : null}
                   </div>
                   {deck.status === "ready" ? (
                     <Link
                       href={`/decks/${deck._id}`}
-                      className="inline-flex bg-ink px-4 py-2 text-sm font-semibold text-white hover:bg-accent-deep"
+                      className="inline-flex shrink-0 bg-accent px-4 py-2 text-sm font-semibold text-white transition duration-200 hover:bg-accent-deep"
                     >
                       Estudar
                     </Link>
+                  ) : deck.status === "processing" ? (
+                    <span className="text-sm font-medium text-warn">Aguarde…</span>
                   ) : null}
                 </div>
               </li>
