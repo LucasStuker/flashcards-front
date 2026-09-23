@@ -21,6 +21,7 @@ export default function StudyPage() {
   const [flipped, setFlipped] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [reviewing, setReviewing] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -40,117 +41,170 @@ export default function StudyPage() {
   }, [load]);
 
   const current = cards[index];
-  const progress = useMemo(() => {
-    if (cards.length === 0) return "0/0";
-    return `${index + 1}/${cards.length}`;
+  const progressLabel = useMemo(() => {
+    if (cards.length === 0) return "0 / 0";
+    return `${index + 1} / ${cards.length}`;
+  }, [cards.length, index]);
+
+  const progressPct = useMemo(() => {
+    if (cards.length === 0) return 0;
+    return Math.round(((index + 1) / cards.length) * 100);
   }, [cards.length, index]);
 
   async function onReview(rating: "again" | "hard" | "good" | "easy") {
-    if (!current) return;
+    if (!current || reviewing) return;
+    setReviewing(true);
     try {
       await reviewCard(current._id, rating);
       setFlipped(false);
       setIndex((i) => (i + 1 < cards.length ? i + 1 : 0));
+      setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Falha ao registrar revisão");
+    } finally {
+      setReviewing(false);
     }
   }
 
   if (loading) {
     return (
-      <main className="mx-auto max-w-3xl px-6 py-10 text-muted">Carregando…</main>
+      <main className="mx-auto flex min-h-screen w-full max-w-3xl flex-col gap-4 px-6 py-12">
+        <Link href="/" className="text-sm font-medium text-accent hover:text-accent-deep">
+          ← Decks
+        </Link>
+        <p className="text-muted" aria-live="polite">
+          Carregando deck…
+        </p>
+      </main>
     );
   }
 
-  if (error) {
+  if (error && !current) {
     return (
-      <main className="mx-auto max-w-3xl px-6 py-10">
-        <p className="text-bad">{error}</p>
-        <Link href="/" className="mt-4 inline-block text-accent">
-          Voltar
+      <main className="mx-auto flex min-h-screen w-full max-w-3xl flex-col gap-4 px-6 py-12">
+        <Link href="/" className="text-sm font-medium text-accent hover:text-accent-deep">
+          ← Decks
         </Link>
+        <p role="alert" className="border border-bad/30 bg-bad/5 px-4 py-3 text-sm text-bad">
+          {error}
+        </p>
       </main>
     );
   }
 
   if (!current) {
     return (
-      <main className="mx-auto max-w-3xl px-6 py-10">
-        <p className="text-muted">Este deck ainda não tem flashcards.</p>
-        <Link href="/" className="mt-4 inline-block text-accent">
-          Voltar
-        </Link>
-      </main>
-    );
-  }
-
-  return (
-    <main className="mx-auto flex min-h-screen w-full max-w-3xl flex-col gap-8 px-6 py-10">
-      <div className="flex items-center justify-between gap-4">
+      <main className="mx-auto flex min-h-screen w-full max-w-3xl flex-col gap-4 px-6 py-12">
         <Link href="/" className="text-sm font-medium text-accent hover:text-accent-deep">
           ← Decks
         </Link>
-        <p className="text-sm text-muted">{progress}</p>
-      </div>
-
-      <header>
         <h1
           className="text-3xl text-ink"
           style={{ fontFamily: "var(--font-display), sans-serif" }}
         >
           {deck?.title ?? "Estudar"}
         </h1>
+        <p className="border border-line bg-panel px-5 py-8 text-sm text-muted">
+          Este deck ainda não tem flashcards.
+        </p>
+      </main>
+    );
+  }
+
+  return (
+    <main className="mx-auto flex min-h-screen w-full max-w-3xl flex-col gap-8 px-6 py-12">
+      <div className="flex items-center justify-between gap-4">
+        <Link
+          href="/"
+          className="text-sm font-medium text-accent transition hover:text-accent-deep"
+        >
+          ← Decks
+        </Link>
+        <p className="text-sm tabular-nums text-muted" aria-live="polite">
+          {progressLabel}
+        </p>
+      </div>
+
+      <div
+        className="h-1 w-full overflow-hidden bg-line/60"
+        role="progressbar"
+        aria-valuenow={progressPct}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-label="Progresso do deck"
+      >
+        <div
+          className="h-full bg-accent transition-[width] duration-300 ease-out"
+          style={{ width: `${progressPct}%` }}
+        />
+      </div>
+
+      <header>
+        <h1
+          className="text-3xl text-ink md:text-4xl"
+          style={{ fontFamily: "var(--font-display), sans-serif" }}
+        >
+          {deck?.title ?? "Estudar"}
+        </h1>
         {current.topic ? (
-          <p className="mt-2 text-sm text-muted">Tópico: {current.topic}</p>
+          <p className="mt-2 text-sm text-muted">{current.topic}</p>
         ) : null}
       </header>
+
+      {error ? (
+        <p role="alert" className="border border-bad/30 bg-bad/5 px-4 py-3 text-sm text-bad">
+          {error}
+        </p>
+      ) : null}
 
       <button
         type="button"
         onClick={() => setFlipped((v) => !v)}
-        className="min-h-64 border border-line bg-panel px-6 py-8 text-left transition hover:border-accent/50"
+        aria-pressed={flipped}
+        className="study-card min-h-64 border border-line bg-panel px-6 py-8 text-left transition duration-200 hover:border-accent/50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
       >
         <p className="mb-3 text-xs font-semibold tracking-[0.16em] text-accent uppercase">
           {flipped ? "Resposta" : "Pergunta"}
         </p>
-        <p className="text-xl leading-relaxed text-ink whitespace-pre-wrap">
+        <p
+          key={flipped ? "back" : "front"}
+          className="study-card-face text-xl leading-relaxed text-ink whitespace-pre-wrap"
+        >
           {flipped ? current.back : current.front}
         </p>
-        <p className="mt-8 text-sm text-muted">Clique para virar</p>
+        <p className="mt-8 text-sm text-muted">
+          {flipped ? "Clique para ver a pergunta" : "Clique para revelar a resposta"}
+        </p>
       </button>
 
       {current.tags?.length ? (
-        <div className="flex flex-wrap gap-2">
-          {current.tags.map((tag) => (
-            <span
-              key={tag}
-              className="border border-line px-2 py-1 text-xs text-muted"
-            >
-              {tag}
-            </span>
-          ))}
-        </div>
+        <p className="text-sm text-muted">{current.tags.join(" · ")}</p>
       ) : null}
 
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        {(
-          [
-            ["again", "Errei"],
-            ["hard", "Difícil"],
-            ["good", "Bom"],
-            ["easy", "Fácil"],
-          ] as const
-        ).map(([rating, label]) => (
-          <button
-            key={rating}
-            type="button"
-            onClick={() => void onReview(rating)}
-            className="border border-line bg-white px-3 py-3 text-sm font-semibold text-ink hover:border-accent hover:text-accent"
-          >
-            {label}
-          </button>
-        ))}
-      </div>
+      {flipped ? (
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-4" aria-label="Avaliar lembrança">
+          {(
+            [
+              ["again", "Errei"],
+              ["hard", "Difícil"],
+              ["good", "Bom"],
+              ["easy", "Fácil"],
+            ] as const
+          ).map(([rating, label]) => (
+            <button
+              key={rating}
+              type="button"
+              disabled={reviewing}
+              onClick={() => void onReview(rating)}
+              className="border border-line bg-panel px-3 py-3 text-sm font-semibold text-ink transition duration-200 hover:border-accent hover:text-accent disabled:opacity-60"
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      ) : (
+        <p className="text-sm text-muted">Revele a resposta para avaliar.</p>
+      )}
     </main>
   );
 }

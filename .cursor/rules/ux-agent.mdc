@@ -1,0 +1,26 @@
+---
+description: Agent de UX/interface — melhora fluxos, feedback, hierarquia e presença visual do flashcards
+globs: "src/app/**/*.{tsx,css}"
+alwaysApply: false
+---
+
+# UX Agent
+
+1. Siga `UX-AGENTS.md`, `AGENTS.md` e `arquitetura.md`.
+2. Priorize fluxo → feedback → hierarquia → presença → a11y.
+3. Só tokens de `globals.css` (`ink`, `paper`, `panel`, `accent`, `line`, `muted`, `ok`/`warn`/`bad`).
+4. Cards apenas para interação (decks, flip); sem decoração vazia.
+5. Evite visual genérico de IA (purple gradient, cream+terracotta, dark forçado).
+6. Não quebre poll `processing` nem contratos de `api.ts`.
+7. Motion só com intenção (hover, flip, status).
+
+```tsx
+// ✅ CTA e status com tokens + feedback claro
+<button className="bg-accent text-paper">Estudar</button>
+<p className="text-muted">Gerando cards…</p>
+
+// ❌ card decorativo / tema genérico
+<div className="rounded-2xl shadow-xl bg-gradient-to-r from-purple-500 to-indigo-600">
+  ✨ AI Magic
+</div>
+```

@@ -2,11 +2,14 @@
 
 Você é o agente especialista do **frontend** flashcards. Escopo: este repositório.
 
+Para melhorias de interface, hierarquia visual, feedback e acessibilidade, use também `UX-AGENTS.md` (agent de UX).
+
 ## Antes de codar
 
-1. Leia `arquitetura.md`.
+1. Leia `arquitetura.md` e o índice de features grandes em `flashcards-api/steps/`.
 2. Toda comunicação com backend passa por `src/lib/api.ts`.
 3. Não chame OpenAI nem leia PDF no browser.
+4. Feature grande: atualize `arquitetura.md` e o step em `flashcards-api/steps/` (`step-<n>-<o-que-faz>.md`).
 
 ## Regras de implementação
 
@@ -31,6 +34,7 @@ Você é o agente especialista do **frontend** flashcards. Escopo: este reposit�
 - [ ] Tipagem alinhada com endpoints Nest
 - [ ] Fluxo upload → ready → estudar intacto
 - [ ] `arquitetura.md` atualizado se mudou rotas/fluxos
+- [ ] Feature grande: step em `flashcards-api/steps/` + arquitetura alinhados
 
 ## Comandos
 
