@@ -2,26 +2,30 @@ import Image from "next/image";
 import Link from "next/link";
 
 type Props = {
-  size?: "sm" | "md" | "lg";
+  size?: "sm" | "md" | "lg" | "hero";
   href?: string | null;
+  stacked?: boolean;
 };
 
 const sizes = {
-  sm: { img: 36, text: "text-lg" },
-  md: { img: 44, text: "text-xl" },
-  lg: { img: 72, text: "text-4xl" },
+  sm: { img: 40, text: "text-lg", gap: "gap-2" },
+  md: { img: 52, text: "text-xl", gap: "gap-2.5" },
+  lg: { img: 80, text: "text-3xl", gap: "gap-3" },
+  hero: { img: 120, text: "text-4xl", gap: "gap-3" },
 };
 
-export function BrandMark({ size = "md", href = "/" }: Props) {
-  const { img, text } = sizes[size];
+export function BrandMark({ size = "md", href = "/", stacked = false }: Props) {
+  const { img, text, gap } = sizes[size];
   const mark = (
-    <span className="inline-flex items-center gap-3">
+    <span
+      className={`inline-flex items-center ${gap} ${stacked ? "flex-col" : ""}`}
+    >
       <Image
         src="/logo.png"
         alt=""
-        width={img}
+        width={img * 2}
         height={img}
-        className="h-auto w-auto"
+        className="h-auto w-auto shrink-0"
         style={{ height: img, width: "auto" }}
         priority
       />
@@ -37,7 +41,7 @@ export function BrandMark({ size = "md", href = "/" }: Props) {
   if (!href) return mark;
 
   return (
-    <Link href={href} className="inline-flex items-center outline-offset-4">
+    <Link href={href} className="inline-flex shrink-0 items-center outline-offset-4">
       {mark}
     </Link>
   );

@@ -32,17 +32,15 @@ function AccountContent() {
     <AppShell maxWidth="md">
       <header>
         <h1
-          className="text-3xl text-ink"
+          className="text-xl text-ink"
           style={{ fontFamily: "var(--font-display), sans-serif" }}
         >
-          Alterar senha
+          Conta
         </h1>
-        <p className="mt-2 text-sm text-muted">
-          Qualquer admin pode trocar a própria senha.
-        </p>
+        <p className="mt-1 text-sm text-muted">Altere a sua senha.</p>
       </header>
 
-      <form onSubmit={onSubmit} className="flex flex-col gap-4">
+      <form onSubmit={onSubmit} className="flex flex-col gap-3">
         <label className="flex flex-col gap-1 text-sm">
           <span className="font-medium text-ink">Senha atual</span>
           <input
@@ -51,7 +49,7 @@ function AccountContent() {
             minLength={6}
             value={currentPassword}
             onChange={(e) => setCurrentPassword(e.target.value)}
-            className="border border-line bg-panel px-3 py-3 outline-none focus:border-accent"
+            className="border border-line bg-panel px-3 py-2 outline-none focus:border-accent"
           />
         </label>
         <label className="flex flex-col gap-1 text-sm">
@@ -62,7 +60,7 @@ function AccountContent() {
             minLength={6}
             value={newPassword}
             onChange={(e) => setNewPassword(e.target.value)}
-            className="border border-line bg-panel px-3 py-3 outline-none focus:border-accent"
+            className="border border-line bg-panel px-3 py-2 outline-none focus:border-accent"
           />
         </label>
 

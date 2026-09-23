@@ -71,14 +71,13 @@ function UsersContent() {
     <AppShell maxWidth="lg" requireSuperAdmin>
       <header>
         <h1
-          className="text-3xl text-ink"
+          className="text-xl text-ink"
           style={{ fontFamily: "var(--font-display), sans-serif" }}
         >
           Admins
         </h1>
-        <p className="mt-2 text-sm text-muted">
-          Só o super admin cria e gerencia contas. Cada admin vê só os próprios
-          decks.
+        <p className="mt-1 text-sm text-muted">
+          Cada admin vê só os próprios decks.
         </p>
       </header>
 

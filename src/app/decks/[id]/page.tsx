@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { AppShell } from "../../../components/AppShell";
+import { StudyCard } from "../../../components/StudyCard";
 import {
   Deck,
   Flashcard,
@@ -69,8 +70,8 @@ export default function StudyPage() {
 
   if (loading) {
     return (
-      <AppShell maxWidth="lg">
-        <p className="text-muted" aria-live="polite">
+      <AppShell maxWidth="study">
+        <p className="text-sm text-muted" aria-live="polite">
           Carregando deck…
         </p>
       </AppShell>
@@ -79,8 +80,8 @@ export default function StudyPage() {
 
   if (error && !current) {
     return (
-      <AppShell maxWidth="lg">
-        <p role="alert" className="border border-bad/30 bg-bad/5 px-4 py-3 text-sm text-bad">
+      <AppShell maxWidth="study">
+        <p role="alert" className="border border-bad/30 bg-bad/5 px-3 py-2 text-sm text-bad">
           {error}
         </p>
       </AppShell>
@@ -89,14 +90,14 @@ export default function StudyPage() {
 
   if (!current) {
     return (
-      <AppShell maxWidth="lg">
+      <AppShell maxWidth="study">
         <h1
-          className="text-3xl text-ink"
+          className="text-xl text-ink"
           style={{ fontFamily: "var(--font-display), sans-serif" }}
         >
           {deck?.title ?? "Estudar"}
         </h1>
-        <p className="border border-line bg-panel px-5 py-8 text-sm text-muted">
+        <p className="border border-line bg-panel px-4 py-5 text-sm text-muted">
           Este deck ainda não tem flashcards.
         </p>
       </AppShell>
@@ -104,15 +105,23 @@ export default function StudyPage() {
   }
 
   return (
-    <AppShell maxWidth="lg">
-      <div className="flex items-center justify-between gap-4">
-        <Link
-          href="/"
-          className="text-sm font-medium text-accent transition hover:text-accent-deep"
-        >
-          ← Decks
-        </Link>
-        <p className="text-sm tabular-nums text-muted" aria-live="polite">
+    <AppShell maxWidth="study">
+      <div className="flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          <Link
+            href="/"
+            className="text-sm font-medium text-accent hover:text-accent-deep"
+          >
+            ← Decks
+          </Link>
+          <h1
+            className="truncate text-lg text-ink"
+            style={{ fontFamily: "var(--font-display), sans-serif" }}
+          >
+            {deck?.title ?? "Estudar"}
+          </h1>
+        </div>
+        <p className="shrink-0 text-sm tabular-nums text-muted" aria-live="polite">
           {progressLabel}
         </p>
       </div>
@@ -131,72 +140,19 @@ export default function StudyPage() {
         />
       </div>
 
-      <header>
-        <h1
-          className="text-3xl text-ink md:text-4xl"
-          style={{ fontFamily: "var(--font-display), sans-serif" }}
-        >
-          {deck?.title ?? "Estudar"}
-        </h1>
-        {current.topic ? (
-          <p className="mt-2 text-sm text-muted">{current.topic}</p>
-        ) : null}
-      </header>
-
       {error ? (
-        <p role="alert" className="border border-bad/30 bg-bad/5 px-4 py-3 text-sm text-bad">
+        <p role="alert" className="border border-bad/30 bg-bad/5 px-3 py-2 text-sm text-bad">
           {error}
         </p>
       ) : null}
 
-      <button
-        type="button"
-        onClick={() => setFlipped((v) => !v)}
-        aria-pressed={flipped}
-        className="study-card min-h-64 border border-line bg-panel px-6 py-8 text-left transition duration-200 hover:border-accent/50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
-      >
-        <p className="mb-3 text-xs font-semibold tracking-[0.16em] text-accent uppercase">
-          {flipped ? "Resposta" : "Pergunta"}
-        </p>
-        <p
-          key={flipped ? "back" : "front"}
-          className="study-card-face text-xl leading-relaxed text-ink whitespace-pre-wrap"
-        >
-          {flipped ? current.back : current.front}
-        </p>
-        <p className="mt-8 text-sm text-muted">
-          {flipped ? "Clique para ver a pergunta" : "Clique para revelar a resposta"}
-        </p>
-      </button>
-
-      {current.tags?.length ? (
-        <p className="text-sm text-muted">{current.tags.join(" · ")}</p>
-      ) : null}
-
-      {flipped ? (
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-4" aria-label="Avaliar lembrança">
-          {(
-            [
-              ["again", "Errei"],
-              ["hard", "Difícil"],
-              ["good", "Bom"],
-              ["easy", "Fácil"],
-            ] as const
-          ).map(([rating, label]) => (
-            <button
-              key={rating}
-              type="button"
-              disabled={reviewing}
-              onClick={() => void onReview(rating)}
-              className="border border-line bg-panel px-3 py-3 text-sm font-semibold text-ink transition duration-200 hover:border-accent hover:text-accent disabled:opacity-60"
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-      ) : (
-        <p className="text-sm text-muted">Revele a resposta para avaliar.</p>
-      )}
+      <StudyCard
+        card={current}
+        flipped={flipped}
+        reviewing={reviewing}
+        onFlip={() => setFlipped((v) => !v)}
+        onReview={(rating) => void onReview(rating)}
+      />
     </AppShell>
   );
 }
