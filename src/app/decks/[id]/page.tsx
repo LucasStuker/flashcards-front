@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { AppShell } from "../../../components/AppShell";
 import {
   Deck,
   Flashcard,
@@ -68,36 +69,27 @@ export default function StudyPage() {
 
   if (loading) {
     return (
-      <main className="mx-auto flex min-h-screen w-full max-w-3xl flex-col gap-4 px-6 py-12">
-        <Link href="/" className="text-sm font-medium text-accent hover:text-accent-deep">
-          ← Decks
-        </Link>
+      <AppShell maxWidth="lg">
         <p className="text-muted" aria-live="polite">
           Carregando deck…
         </p>
-      </main>
+      </AppShell>
     );
   }
 
   if (error && !current) {
     return (
-      <main className="mx-auto flex min-h-screen w-full max-w-3xl flex-col gap-4 px-6 py-12">
-        <Link href="/" className="text-sm font-medium text-accent hover:text-accent-deep">
-          ← Decks
-        </Link>
+      <AppShell maxWidth="lg">
         <p role="alert" className="border border-bad/30 bg-bad/5 px-4 py-3 text-sm text-bad">
           {error}
         </p>
-      </main>
+      </AppShell>
     );
   }
 
   if (!current) {
     return (
-      <main className="mx-auto flex min-h-screen w-full max-w-3xl flex-col gap-4 px-6 py-12">
-        <Link href="/" className="text-sm font-medium text-accent hover:text-accent-deep">
-          ← Decks
-        </Link>
+      <AppShell maxWidth="lg">
         <h1
           className="text-3xl text-ink"
           style={{ fontFamily: "var(--font-display), sans-serif" }}
@@ -107,12 +99,12 @@ export default function StudyPage() {
         <p className="border border-line bg-panel px-5 py-8 text-sm text-muted">
           Este deck ainda não tem flashcards.
         </p>
-      </main>
+      </AppShell>
     );
   }
 
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-3xl flex-col gap-8 px-6 py-12">
+    <AppShell maxWidth="lg">
       <div className="flex items-center justify-between gap-4">
         <Link
           href="/"
@@ -205,6 +197,6 @@ export default function StudyPage() {
       ) : (
         <p className="text-sm text-muted">Revele a resposta para avaliar.</p>
       )}
-    </main>
+    </AppShell>
   );
 }

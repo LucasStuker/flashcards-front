@@ -1,8 +1,7 @@
 "use client";
 
 import { FormEvent, useCallback, useEffect, useState } from "react";
-import { AppHeader } from "../../components/AppHeader";
-import { AuthGate } from "../../components/AuthGate";
+import { AppShell } from "../../components/AppShell";
 import { AuthUser } from "../../lib/auth";
 import { createAdmin, listUsers, updateUser } from "../../lib/api";
 
@@ -69,9 +68,7 @@ function UsersContent() {
   }
 
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-3xl flex-col gap-8 px-6 py-10">
-      <AppHeader />
-
+    <AppShell maxWidth="lg" requireSuperAdmin>
       <header>
         <h1
           className="text-3xl text-ink"
@@ -160,14 +157,10 @@ function UsersContent() {
           ))}
         </ul>
       )}
-    </main>
+    </AppShell>
   );
 }
 
 export default function UsersPage() {
-  return (
-    <AuthGate requireSuperAdmin>
-      <UsersContent />
-    </AuthGate>
-  );
+  return <UsersContent />;
 }

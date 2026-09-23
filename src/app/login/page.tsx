@@ -2,6 +2,7 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { BrandMark } from "../../components/BrandMark";
 import { login } from "../../lib/api";
 import { getToken } from "../../lib/auth";
 
@@ -32,18 +33,10 @@ export default function LoginPage() {
 
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-md flex-col justify-center gap-8 px-6 py-10">
-      <header className="flex flex-col gap-3">
-        <p className="text-sm font-medium tracking-[0.18em] text-accent uppercase">
-          DataPrev 2026
-        </p>
-        <h1
-          className="text-4xl leading-tight text-ink"
-          style={{ fontFamily: "var(--font-display), sans-serif" }}
-        >
-          Entrar
-        </h1>
+      <header className="flex flex-col gap-4">
+        <BrandMark size="lg" href={null} />
         <p className="text-sm text-muted">
-          Acesse sua conta para ver apenas os seus flashcards.
+          Entre para gerar e estudar os seus flashcards.
         </p>
       </header>
 

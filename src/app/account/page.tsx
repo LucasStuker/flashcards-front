@@ -1,8 +1,7 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import { AppHeader } from "../../components/AppHeader";
-import { AuthGate } from "../../components/AuthGate";
+import { AppShell } from "../../components/AppShell";
 import { changeOwnPassword } from "../../lib/api";
 
 function AccountContent() {
@@ -30,8 +29,7 @@ function AccountContent() {
   }
 
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-lg flex-col gap-8 px-6 py-10">
-      <AppHeader />
+    <AppShell maxWidth="md">
       <header>
         <h1
           className="text-3xl text-ink"
@@ -87,14 +85,10 @@ function AccountContent() {
           {loading ? "Salvando…" : "Salvar"}
         </button>
       </form>
-    </main>
+    </AppShell>
   );
 }
 
 export default function AccountPage() {
-  return (
-    <AuthGate>
-      <AccountContent />
-    </AuthGate>
-  );
+  return <AccountContent />;
 }

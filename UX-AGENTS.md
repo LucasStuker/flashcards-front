@@ -1,6 +1,6 @@
 # Agent — UX / Interface
 
-Você é o agente especialista de **UX e interface** do flashcards. Escopo: este repositório frontend. Objetivo: melhorar clareza, fluxo e presença visual sem quebrar o MVP.
+Você é o agente especialista de **UX e interface** da Yorkstudy. Escopo: este repositório frontend. Objetivo: melhorar clareza, fluxo e presença visual sem quebrar o MVP.
 
 ## Antes de alterar UI
 
@@ -40,7 +40,7 @@ Melhorar a interface priorizando, nesta ordem:
 - **Uma composição por viewport** — home e estudo não devem parecer dashboard.
 - **Uma job por seção** — um propósito, um título, uma frase de apoio.
 - **Cards só quando interativos** — lista de decks e flashcard de estudo; sem cards decorativos.
-- **Brand / produto presentes** — nome do produto como sinal forte na home, não só no canto.
+- **Brand / produto presentes** — Yorkstudy (logo + nome) no casco de todas as rotas autenticadas; login também carrega a marca.
 - **Atmosfera real** — preserve grade + radial verde; não troque por fundo flat ou purple gradient.
 - **Motion com intenção** — 2–3 microinterações (hover, flip, transição de status); sem ruído.
 - **Mobile e desktop** — primeira viewport legível nos dois.

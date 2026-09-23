@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
+import { AppShell } from "../components/AppShell";
 import { Deck, listDecks, uploadPdf } from "../lib/api";
 
 function statusLabel(status: Deck["status"]) {
@@ -68,19 +69,17 @@ export default function HomePage() {
   }
 
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-5xl flex-col gap-12 px-6 py-12">
-      <header className="flex max-w-2xl flex-col gap-4">
+    <AppShell>
+      <header className="flex max-w-2xl flex-col gap-2">
         <h1
-          className="text-5xl leading-[1.05] tracking-tight text-ink md:text-6xl"
+          className="text-3xl tracking-tight text-ink md:text-4xl"
           style={{ fontFamily: "var(--font-display), sans-serif" }}
         >
-          Flashcards
+          Seus decks
         </h1>
-        <p className="text-lg text-muted md:text-xl">
-          Do PDF do Estratégia para o estudo com repetição espaçada.
-        </p>
-        <p className="text-sm font-medium tracking-[0.14em] text-accent uppercase">
-          DataPrev 2026
+        <p className="text-muted">
+          Envie um PDF. A Yorkstudy gera os cards e você revisa com repetição
+          espaçada.
         </p>
       </header>
 
@@ -111,7 +110,7 @@ export default function HomePage() {
               className="text-xl text-ink"
               style={{ fontFamily: "var(--font-display), sans-serif" }}
             >
-              Envie o PDF da aula
+              Envie um PDF
             </h2>
             <p className="mt-1 text-sm text-muted">
               Arraste o arquivo aqui ou selecione no computador (máx. 40 MB).
@@ -184,7 +183,7 @@ export default function HomePage() {
           </p>
         ) : decks.length === 0 ? (
           <p className="border border-line bg-panel px-5 py-8 text-sm text-muted">
-            Nenhum deck ainda. Envie o PDF da Aula 00 para começar.
+            Nenhum deck ainda. Envie um PDF para começar.
           </p>
         ) : (
           <ul className="grid gap-3">
@@ -231,6 +230,6 @@ export default function HomePage() {
           </ul>
         )}
       </section>
-    </main>
+    </AppShell>
   );
 }

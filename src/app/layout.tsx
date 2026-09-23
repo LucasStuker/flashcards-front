@@ -14,8 +14,9 @@ const sans = IBM_Plex_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Flashcards DataPrev",
-  description: "Gere e estude flashcards a partir dos PDFs do Estratégia",
+  title: "Yorkstudy",
+  description: "Gere e estude flashcards a partir de qualquer PDF.",
+  icons: { icon: "/logo.png" },
 };
 
 export default function RootLayout({
