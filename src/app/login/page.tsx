@@ -2,6 +2,7 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { BrandMark } from "../../components/BrandMark";
 import { login } from "../../lib/api";
 import { getToken } from "../../lib/auth";
 
@@ -31,23 +32,13 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-md flex-col justify-center gap-8 px-6 py-10">
-      <header className="flex flex-col gap-3">
-        <p className="text-sm font-medium tracking-[0.18em] text-accent uppercase">
-          DataPrev 2026
-        </p>
-        <h1
-          className="text-4xl leading-tight text-ink"
-          style={{ fontFamily: "var(--font-display), sans-serif" }}
-        >
-          Entrar
-        </h1>
-        <p className="text-sm text-muted">
-          Acesse sua conta para ver apenas os seus flashcards.
-        </p>
+    <main className="mx-auto flex min-h-screen w-full max-w-sm flex-col justify-center gap-5 px-4 py-8">
+      <header className="flex flex-col items-center gap-3 text-center">
+        <BrandMark size="hero" href={null} stacked />
+        <p className="text-sm text-muted">Entre para estudar os seus decks.</p>
       </header>
 
-      <form onSubmit={onSubmit} className="flex flex-col gap-4">
+      <form onSubmit={onSubmit} className="flex flex-col gap-3">
         <label className="flex flex-col gap-1 text-sm">
           <span className="font-medium text-ink">E-mail</span>
           <input
@@ -56,7 +47,7 @@ export default function LoginPage() {
             autoComplete="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="border border-line bg-panel px-3 py-3 text-ink outline-none focus:border-accent"
+            className="border border-line bg-panel px-3 py-2 text-ink outline-none focus:border-accent"
           />
         </label>
         <label className="flex flex-col gap-1 text-sm">
@@ -68,7 +59,7 @@ export default function LoginPage() {
             autoComplete="current-password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="border border-line bg-panel px-3 py-3 text-ink outline-none focus:border-accent"
+            className="border border-line bg-panel px-3 py-2 text-ink outline-none focus:border-accent"
           />
         </label>
 
@@ -81,7 +72,7 @@ export default function LoginPage() {
         <button
           type="submit"
           disabled={loading}
-          className="bg-accent px-5 py-3 text-sm font-semibold text-white transition hover:bg-accent-deep disabled:opacity-60"
+          className="bg-accent px-4 py-2 text-sm font-semibold text-white transition hover:bg-accent-deep disabled:opacity-60"
         >
           {loading ? "Entrando…" : "Entrar"}
         </button>

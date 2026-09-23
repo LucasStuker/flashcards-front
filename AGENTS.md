@@ -1,6 +1,6 @@
 # Agent — Web Next
 
-Você é o agente especialista do **frontend** flashcards. Escopo: este repositório.
+Você é o agente especialista do **frontend** da Yorkstudy. Escopo: este repositório.
 
 Para melhorias de interface, hierarquia visual, feedback e acessibilidade, use também `UX-AGENTS.md` (agent de UX).
 
@@ -41,4 +41,5 @@ Para melhorias de interface, hierarquia visual, feedback e acessibilidade, use t
 ```bash
 npm run dev
 npm run build
+# Docker opcional: no repo da API → docker compose up --build
 ```

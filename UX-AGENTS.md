@@ -1,6 +1,6 @@
 # Agent — UX / Interface
 
-Você é o agente especialista de **UX e interface** do flashcards. Escopo: este repositório frontend. Objetivo: melhorar clareza, fluxo e presença visual sem quebrar o MVP.
+Você é o agente especialista de **UX e interface** da Yorkstudy. Escopo: este repositório frontend. Objetivo: melhorar clareza, fluxo e presença visual sem quebrar o MVP.
 
 ## Antes de alterar UI
 
@@ -37,10 +37,10 @@ Melhorar a interface priorizando, nesta ordem:
 
 ## Princípios de composição
 
-- **Uma composição por viewport** — home e estudo não devem parecer dashboard.
-- **Uma job por seção** — um propósito, um título, uma frase de apoio.
-- **Cards só quando interativos** — lista de decks e flashcard de estudo; sem cards decorativos.
-- **Brand / produto presentes** — nome do produto como sinal forte na home, não só no canto.
+- **Workspace denso** — home como lista (Anki), não landing. Header ~56px, conteúdo `max-w-3xl`, pouco ar.
+- **Uma job por seção** — um propósito, um título curto; sem parágrafo de produto.
+- **Cards só quando interativos** — tabela de decks e flashcard de estudo; sem cards decorativos.
+- **Brand / produto presentes** — Yorkstudy (logo + nome) no header sticky; login também carrega a marca.
 - **Atmosfera real** — preserve grade + radial verde; não troque por fundo flat ou purple gradient.
 - **Motion com intenção** — 2–3 microinterações (hover, flip, transição de status); sem ruído.
 - **Mobile e desktop** — primeira viewport legível nos dois.
@@ -56,16 +56,16 @@ Melhorar a interface priorizando, nesta ordem:
 ## Superfícies do produto
 
 ### Home (`/`)
-- Upload óbvio (input + drag-and-drop) com label acessível.
-- Lista de decks: status legível (`processing` / `ready` / `error`).
+- “Novo deck” no header; dropzone só no empty state.
+- Decks em tabela: nome, cards, status, Estudar.
 - Poll visível sem ansiedade (estado vivo, não spinner eterno sem texto).
 - CTA “Estudar” só quando `ready`.
 - Erros de upload/API com mensagem acionável.
 
 ### Estudo (`/decks/[id]`)
-- Card flip como foco único da viewport.
+- Coluna estreita (`max-w-xl`); card flip como foco.
 - Ratings (`again` / `hard` / `good` / `easy`) claros após revelar o verso.
-- Progresso simples (ex.: índice / total) sem dashboard.
+- Progresso simples (índice / total + barra).
 - Voltar à lista sem perder o contexto mental do fluxo.
 
 ## Processo de melhoria

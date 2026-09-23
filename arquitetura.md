@@ -1,6 +1,6 @@
 # Arquitetura — Web (`web/`)
 
-Frontend Next.js do MVP de flashcards (estudo a partir de PDFs do Estratégia).
+Frontend Next.js da **Yorkstudy** — gere e estude flashcards a partir de qualquer PDF.
 
 ## Visão geral
 
@@ -16,13 +16,15 @@ Nest API http://localhost:3001
    ├── login → token
    ├── upload PDF → cria deck do usuário
    ├── poll lista até status ready
-   └── study + review SRS
+   └── study + review SRS → histórico (acerto / erro / dúvida)
 ```
 
 - **Porta:** `3000`
 - **API:** `NEXT_PUBLIC_API_URL` (default `http://localhost:3001`)
+- **Produto:** Yorkstudy (nome provisório) + `public/logo.png`
 - **Estilo:** Tailwind CSS v4 + tokens em `globals.css`
-- **Auth:** JWT no `localStorage`; rotas protegidas com `AuthGate`
+- **Auth:** JWT no `localStorage`; rotas autenticadas no `AppShell` (`AuthGate` + header sticky)
+- **UI:** workspace denso (lista Anki); estudo em coluna `max-w-xl`
 
 ## Stack
 
@@ -38,8 +40,9 @@ Nest API http://localhost:3001
 | Rota | Arquivo | Função |
 |------|---------|--------|
 | `/login` | `src/app/login/page.tsx` | Login |
-| `/` | `src/app/page.tsx` | Upload PDF + lista de decks (auth) |
+| `/` | `src/app/page.tsx` | Lista de decks + Novo deck (auth) |
 | `/decks/[id]` | `src/app/decks/[id]/page.tsx` | Modo estudo (auth) |
+| `/history` | `src/app/history/page.tsx` | Histórico de fichas avaliadas (auth) |
 | `/account` | `src/app/account/page.tsx` | Trocar própria senha |
 | `/users` | `src/app/users/page.tsx` | CRUD admins (só super_admin) |
 
@@ -53,6 +56,7 @@ Tipos e funções:
 - `listDecks()`, `getDeck(id)`, `getFlashcards(deckId)`
 - `uploadPdf(file)` — `FormData` campo `file`
 - `reviewCard(id, rating)` — `again | hard | good | easy`
+- `getHistory(outcome?)` — `GET /history`; `correct` (Bom/Fácil), `wrong` (Errei), `unsure` (Dúvida)
 - `listUsers()`, `createAdmin()`, `updateUser()`, `changeOwnPassword()`
 
 Sessão (`src/lib/auth.ts`):
@@ -71,14 +75,20 @@ Sessão (`src/lib/auth.ts`):
 1. `AuthGate` valida sessão (`/auth/me`).
 2. Lista decks ao montar (só do usuário).
 3. Poll a cada 2s enquanto houver deck `processing` (feedback vivo na UI).
-4. Upload por input ou drag-and-drop (label acessível + estado enviando).
-5. Mostra status, método (`IA OpenAI` / `heurística`) e `generationNote` se houver.
+4. “Novo deck” no header (file picker); dropzone só se a lista estiver vazia.
+5. Tabela: nome, cards, status; `generationNote` / erro na linha.
 6. CTA Estudar só quando `ready`.
 
 ### Estudo
 1. Carrega deck + cards (API rejeita se não for dono).
 2. Card clicável (frente/verso) com motion leve; progresso textual + barra.
 3. Ratings aparecem após revelar o verso; chamam `PATCH /flashcards/:id/review` e avançam índice.
+4. Botões: Errei, Dúvida, Bom, Fácil. Cada um grava histórico na API.
+
+### Histórico
+1. Header → `/history`.
+2. Filtros Feitas / Acertou / Errou / Dúvida, com a contagem vinda de `summary`.
+3. Toque na ficha alterna pergunta e resposta. O PDF não é exibido nem armazenado.
 
 ### Admins (super_admin)
 1. Lista / cria admins.
@@ -91,7 +101,7 @@ Tokens CSS em `:root` / `@theme`:
 - `--ink`, `--paper`, `--panel`, `--accent`, `--line`, `--muted`
 - Estados: `--ok`, `--warn`, `--bad`
 
-Direção visual: grade clara + verde (`accent`), tipografia expressiva sem tema “AI default” (evitar purple gradient / cream+terracotta genérico).
+Direção visual: workspace denso (header 56px, tabela de decks), grade clara + verde (`accent`). Sem landing, purple gradient ou cream+terracotta genérico.
 
 ## Estrutura de pastas
 
@@ -105,9 +115,15 @@ web/src/
     users/page.tsx
     globals.css
     decks/[id]/page.tsx     # estudo
+    history/page.tsx        # histórico de revisões
   components/
     AuthGate.tsx
-    AppHeader.tsx
+    AppShell.tsx             # AuthGate + header sticky
+    AppHeader.tsx            # logo + nav + menu da conta
+    BrandMark.tsx
+    ImportDeck.tsx           # Novo deck / dropzone vazio
+    DeckList.tsx             # tabela de decks
+    StudyCard.tsx            # flip + ratings
   lib/
     api.ts                   # client HTTP + tipos
     auth.ts                  # localStorage session
@@ -117,7 +133,21 @@ web/src/
 
 | Variável | Uso |
 |----------|-----|
-| `NEXT_PUBLIC_API_URL` | Base da API Nest (`.env.local`) |
+| `NEXT_PUBLIC_API_URL` | Base da API Nest (`.env.local` no dev; build-arg no Docker). URL que o **browser** alcança. |
+
+## Docker (opcional)
+
+O Compose vive no repo da API (`flashcards-api/docker-compose.yml`) e constrói este front como serviço `web`.
+
+```bash
+# a partir de flashcards-api
+docker compose up --build
+```
+
+- Front: `http://localhost:3000`
+- API no browser: `http://localhost:3001` (não use o hostname interno `api`)
+- Next usa `output: "standalone"` só para a imagem
+- Dev local sem Docker: `npm run dev`
 
 ## Decisões técnicas
 

@@ -4,7 +4,7 @@ Passagem de UX nas superfícies home (`/`) e estudo (`/decks/[id]`), alinhada a 
 
 ## Diagnóstico (antes)
 
-- Marca fraca na home: eyebrow “DataPrev 2026” perde para o headline.
+- Marca fraca na home: o nome do produto perdia para o headline.
 - Poll de `processing` sem feedback vivo além do status estático.
 - Ratings no estudo aparecem antes de revelar o verso.
 - Flip sem motion; progresso só textual.
