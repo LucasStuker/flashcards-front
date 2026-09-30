@@ -46,6 +46,14 @@ a {
   text-decoration: none;
 }
 
+.account-menu > summary {
+  list-style: none;
+}
+
+.account-menu > summary::-webkit-details-marker {
+  display: none;
+}
+
 .sr-only {
   position: absolute;
   width: 1px;

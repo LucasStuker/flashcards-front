@@ -9,7 +9,7 @@ alwaysApply: false
 1. Siga `UX-AGENTS.md`, `AGENTS.md` e `arquitetura.md`.
 2. Priorize fluxo → feedback → hierarquia → presença → a11y.
 3. Só tokens de `globals.css` (`ink`, `paper`, `panel`, `accent`, `line`, `muted`, `ok`/`warn`/`bad`).
-4. Cards apenas para interação (decks, flip); sem decoração vazia.
+4. Workspace denso (tabela de decks, estudo estreito); cards só para interação.
 5. Evite visual genérico de IA (purple gradient, cream+terracotta, dark forçado).
 6. Não quebre poll `processing` nem contratos de `api.ts`.
 7. Motion só com intenção (hover, flip, status).

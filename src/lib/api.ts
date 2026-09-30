@@ -107,15 +107,46 @@ export async function uploadPdf(file: File) {
   });
 }
 
-export function reviewCard(
-  id: string,
-  rating: "again" | "hard" | "good" | "easy",
-) {
+export type ReviewRating = "again" | "hard" | "good" | "easy";
+export type ReviewOutcome = "correct" | "wrong" | "unsure";
+
+export type HistoryItem = {
+  _id: string;
+  outcome: ReviewOutcome;
+  rating: ReviewRating;
+  createdAt: string;
+  deck: { _id: string; title: string } | null;
+  card: {
+    _id: string;
+    front: string;
+    back: string;
+    topic?: string;
+    tags: string[];
+  } | null;
+};
+
+export type HistoryResponse = {
+  summary: {
+    total: number;
+    correct: number;
+    wrong: number;
+    unsure: number;
+  };
+  hasMore: boolean;
+  items: HistoryItem[];
+};
+
+export function reviewCard(id: string, rating: ReviewRating) {
   return request<Flashcard>(`/flashcards/${id}/review`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ rating }),
   });
+}
+
+export function getHistory(outcome?: ReviewOutcome) {
+  const query = outcome ? `?outcome=${outcome}` : "";
+  return request<HistoryResponse>(`/history${query}`);
 }
 
 export function listUsers() {
