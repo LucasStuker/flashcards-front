@@ -41,8 +41,10 @@ Nest API http://localhost:3001
 |------|---------|--------|
 | `/login` | `src/app/login/page.tsx` | Login |
 | `/` | `src/app/page.tsx` | Lista de decks + Novo deck (auth) |
-| `/decks/[id]` | `src/app/decks/[id]/page.tsx` | Modo estudo (auth) |
+| `/decks/[id]` | `src/app/decks/[id]/page.tsx` | Fila do dia (auth) |
+| `/decks/[id]/cards` | `src/app/decks/[id]/cards/page.tsx` | Navegador do deck (auth) |
 | `/history` | `src/app/history/page.tsx` | Histórico de fichas avaliadas (auth) |
+| `/stats` | `src/app/stats/page.tsx` | Revisões de hoje, retenção, sequência e previsão |
 | `/account` | `src/app/account/page.tsx` | Trocar própria senha |
 | `/users` | `src/app/users/page.tsx` | CRUD admins (só super_admin) |
 
@@ -53,9 +55,10 @@ Layout global: `src/app/layout.tsx` (metadata, fontes, CSS).
 Tipos e funções:
 
 - `login()`, `me()`
-- `listDecks()`, `getDeck(id)`, `getFlashcards(deckId)`
+- `listDecks()`, `getDeck(id)`, `getFlashcards(deckId, q?)`, `getStudy(deckId)`
 - `uploadPdf(file)` — `FormData` campo `file`
 - `reviewCard(id, rating)` — `again | hard | good | easy`
+- `renameDeck(id, title)`, `deleteDeck(id)`, `createCard(deckId, front, back)`, `deleteCard(id)`, `updateCard(id, data)`, `undoReview()`, `getStats()`
 - `getHistory(outcome?)` — `GET /history`; `correct` (Bom/Fácil), `wrong` (Errei), `unsure` (Dúvida)
 - `listUsers()`, `createAdmin()`, `updateUser()`, `changeOwnPassword()`
 
@@ -76,14 +79,17 @@ Sessão (`src/lib/auth.ts`):
 2. Lista decks ao montar (só do usuário).
 3. Poll a cada 2s enquanto houver deck `processing` (feedback vivo na UI).
 4. “Novo deck” no header (file picker); dropzone só se a lista estiver vazia.
-5. Tabela: nome, cards, status; `generationNote` / erro na linha.
-6. CTA Estudar só quando `ready`.
+5. Lista na coluna, sem rolagem horizontal. O nome quebra a linha; `generationNote` / erro ficam na linha do deck.
+6. CTA Estudar só quando `ready`. Novos, Aprender e Revisar aparecem na tabela no desktop e numa linha no celular. Renomear, Cards e Excluir ficam com o nome. Renomear fica bloqueado enquanto `processing`.
 
 ### Estudo
-1. Carrega deck + cards (API rejeita se não for dono).
-2. Card clicável (frente/verso) com motion leve; progresso textual + barra.
-3. Ratings aparecem após revelar o verso; chamam `PATCH /flashcards/:id/review` e avançam índice.
+1. Carrega a fila `GET /decks/:id/study` (API rejeita se não for dono).
+2. Card clicável (frente/verso) ocupa a coluna. Anterior e próximo ficam acima do card. O rótulo mostra quantos cards ainda restam na fila, com uma barra de progresso.
+3. Ratings aparecem após revelar o verso, com o intervalo previsto (duas colunas no celular, quatro no desktop). Chamam `PATCH /flashcards/:id/review` e recarregam a fila.
 4. Botões: Errei, Dúvida, Bom, Fácil. Cada um grava histórico na API.
+5. Teclado: `←` `→` trocam o card sem avaliar, `espaço` revela, `A` Errei, `S` Dúvida, `W` Bom, `D` Fácil, `Z` desfaz. Atalhos ignoram campo de texto.
+6. Fila vazia: “Deck em dia”, ou a contagem até o próximo card de aprendizado.
+7. “Renomear”, “Cards”, “Novo card” e “Excluir card”. Renomear, criar e excluir recusam deck `processing`.
 
 ### Histórico
 1. Header → `/history`.
@@ -114,8 +120,10 @@ web/src/
     account/page.tsx
     users/page.tsx
     globals.css
-    decks/[id]/page.tsx     # estudo
+    decks/[id]/page.tsx     # fila do dia
+    decks/[id]/cards/page.tsx
     history/page.tsx        # histórico de revisões
+    stats/page.tsx
   components/
     AuthGate.tsx
     AppShell.tsx             # AuthGate + header sticky
@@ -133,7 +141,7 @@ web/src/
 
 | Variável | Uso |
 |----------|-----|
-| `NEXT_PUBLIC_API_URL` | Base da API Nest (`.env.local` no dev; build-arg no Docker). URL que o **browser** alcança. |
+| `NEXT_PUBLIC_API_URL` | Base da API Nest (`.env.local` no dev; env de **build** na Vercel; build-arg no Docker). URL HTTPS que o **browser** alcança — hoje `https://yorkstudy.179.236.227.168.sslip.io` até `api.yorkstudy.com.br` existir. |
 
 ## Docker (opcional)
 

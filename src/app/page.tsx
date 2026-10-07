@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { AppShell } from "../components/AppShell";
 import { DeckList } from "../components/DeckList";
 import { ImportDeck } from "../components/ImportDeck";
-import { Deck, listDecks, uploadPdf } from "../lib/api";
+import { Deck, deleteDeck, listDecks, renameDeck, uploadPdf } from "../lib/api";
 
 export default function HomePage() {
   const [decks, setDecks] = useState<Deck[]>([]);
@@ -37,6 +37,28 @@ export default function HomePage() {
     }, 2000);
     return () => window.clearInterval(id);
   }, [hasProcessing, refresh]);
+
+  async function handleDelete(id: string) {
+    await deleteDeck(id);
+    setDecks((prev) => prev.filter((deck) => deck._id !== id));
+  }
+
+  async function handleRename(id: string, title: string) {
+    const updated = await renameDeck(id, title);
+    setDecks((prev) =>
+      prev.map((deck) =>
+        deck._id === id
+          ? {
+              ...deck,
+              ...updated,
+              newCount: updated.newCount ?? deck.newCount,
+              learnCount: updated.learnCount ?? deck.learnCount,
+              dueCount: updated.dueCount ?? deck.dueCount,
+            }
+          : deck,
+      ),
+    );
+  }
 
   async function handleFile(file: File | null) {
     if (!file) return;
@@ -73,6 +95,8 @@ export default function HomePage() {
         decks={decks}
         loading={loading}
         hasProcessing={hasProcessing}
+        onRename={handleRename}
+        onDelete={handleDelete}
         empty={
           <ImportDeck
             variant="dropzone"

@@ -5,6 +5,7 @@ type Props = {
   size?: "sm" | "md" | "lg" | "hero";
   href?: string | null;
   stacked?: boolean;
+  compact?: boolean;
 };
 
 const sizes = {
@@ -14,7 +15,12 @@ const sizes = {
   hero: { img: 120, text: "text-4xl", gap: "gap-3" },
 };
 
-export function BrandMark({ size = "md", href = "/", stacked = false }: Props) {
+export function BrandMark({
+  size = "md",
+  href = "/",
+  stacked = false,
+  compact = false,
+}: Props) {
   const { img, text, gap } = sizes[size];
   const mark = (
     <span
@@ -30,7 +36,7 @@ export function BrandMark({ size = "md", href = "/", stacked = false }: Props) {
         priority
       />
       <span
-        className={`${text} leading-none tracking-tight text-ink`}
+        className={`${text} leading-none tracking-tight text-ink ${compact ? "hidden sm:inline" : ""}`}
         style={{ fontFamily: "var(--font-display), sans-serif" }}
       >
         Yorkstudy

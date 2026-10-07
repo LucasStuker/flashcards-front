@@ -13,6 +13,9 @@ export type Deck = {
   subject?: string;
   generationMethod?: "openai" | "heuristic";
   generationNote?: string;
+  newCount?: number;
+  learnCount?: number;
+  dueCount?: number;
   createdAt?: string;
   updatedAt?: string;
 };
@@ -27,6 +30,33 @@ export type Flashcard = {
   dueAt?: string;
   intervalDays?: number;
   ease?: number;
+  state?: "new" | "learning" | "review" | "relearning";
+  suspended?: boolean;
+  reps?: number;
+  lapses?: number;
+  scheduled?: Scheduled;
+};
+
+export type Scheduled = {
+  again: string;
+  hard: string;
+  good: string;
+  easy: string;
+};
+
+export type StudyQueue = {
+  cards: Flashcard[];
+  counts: { new: number; learn: number; due: number };
+  nextDueAt: string | null;
+};
+
+export type Stats = {
+  reviewsToday: number;
+  correct: number;
+  total: number;
+  retention: number | null;
+  streak: number;
+  forecast: { date: string; count: number }[];
 };
 
 export type LoginResponse = {
@@ -35,6 +65,17 @@ export type LoginResponse = {
 };
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
+
+function errorMessage(status: number, text: string) {
+  try {
+    const body = JSON.parse(text) as { message?: string | string[] };
+    if (Array.isArray(body.message)) return body.message.join(" ");
+    if (typeof body.message === "string" && body.message) return body.message;
+  } catch {
+    // corpo em texto puro
+  }
+  return text || `Erro ${status}`;
+}
 
 export class ApiError extends Error {
   status: number;
@@ -65,7 +106,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
   if (!res.ok) {
     const text = await res.text();
-    throw new ApiError(res.status, text || `Erro ${res.status}`);
+    throw new ApiError(res.status, errorMessage(res.status, text));
   }
 
   if (res.status === 204) return undefined as T;
@@ -94,8 +135,56 @@ export function getDeck(id: string) {
   return request<Deck>(`/decks/${id}`);
 }
 
-export function getFlashcards(deckId: string) {
-  return request<Flashcard[]>(`/decks/${deckId}/flashcards`);
+export function getFlashcards(deckId: string, q?: string) {
+  const query = q?.trim() ? `?q=${encodeURIComponent(q.trim())}` : "";
+  return request<Flashcard[]>(`/decks/${deckId}/flashcards${query}`);
+}
+
+export function getStudy(deckId: string) {
+  return request<StudyQueue>(`/decks/${deckId}/study`);
+}
+
+export function deleteDeck(id: string) {
+  return request<void>(`/decks/${id}`, { method: "DELETE" });
+}
+
+export function renameDeck(id: string, title: string) {
+  return request<Deck>(`/decks/${id}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ title }),
+  });
+}
+
+export function createCard(deckId: string, front: string, back: string) {
+  return request<Flashcard>(`/decks/${deckId}/flashcards`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ front, back }),
+  });
+}
+
+export function deleteCard(id: string) {
+  return request<void>(`/flashcards/${id}`, { method: "DELETE" });
+}
+
+export function updateCard(
+  id: string,
+  data: { front?: string; back?: string; suspended?: boolean },
+) {
+  return request<Flashcard>(`/flashcards/${id}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+}
+
+export function undoReview() {
+  return request<Flashcard>("/flashcards/undo", { method: "POST" });
+}
+
+export function getStats() {
+  return request<Stats>("/stats");
 }
 
 export async function uploadPdf(file: File) {
