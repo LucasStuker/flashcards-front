@@ -83,12 +83,12 @@ Sessão (`src/lib/auth.ts`):
 6. CTA Estudar só quando `ready`. Novos, Aprender e Revisar aparecem na tabela no desktop e numa linha no celular. Renomear, Cards e Excluir ficam com o nome. Renomear fica bloqueado enquanto `processing`.
 
 ### Estudo
-1. Carrega a fila `GET /decks/:id/study` (API rejeita se não for dono).
-2. Card clicável (frente/verso) ocupa a coluna. Anterior e próximo ficam acima do card. O rótulo mostra quantos cards ainda restam na fila, com uma barra de progresso.
-3. Ratings aparecem após revelar o verso, com o intervalo previsto (duas colunas no celular, quatro no desktop). Chamam `PATCH /flashcards/:id/review` e recarregam a fila.
+1. Carrega `GET /decks/:id/study` no modo deck inteiro (API rejeita se não for dono). “Fila do dia” na própria tela pede `?scope=day`.
+2. Card clicável (frente/verso) ocupa a coluna. Anterior e próximo ficam acima do card. O rótulo mostra a posição no deck (ou na fila do dia), com uma barra de progresso.
+3. Ratings aparecem após revelar o verso, com o intervalo previsto (duas colunas no celular, quatro no desktop). Chamam `PATCH /flashcards/:id/review` e recarregam a lista. No deck inteiro, a posição segue para o próximo card.
 4. Botões: Errei, Dúvida, Bom, Fácil. Cada um grava histórico na API.
 5. Teclado: `←` `→` trocam o card sem avaliar, `espaço` revela, `A` Errei, `S` Dúvida, `W` Bom, `D` Fácil, `Z` desfaz. Atalhos ignoram campo de texto.
-6. Fila vazia: “Deck em dia”, ou a contagem até o próximo card de aprendizado.
+6. Fila do dia vazia: “Deck em dia”, ou a contagem até o próximo card de aprendizado. Deck inteiro sem card ativo: “Nenhum card ativo neste deck.”
 7. “Renomear”, “Cards”, “Novo card” e “Excluir card”. Renomear, criar e excluir recusam deck `processing`.
 
 ### Histórico
@@ -120,7 +120,7 @@ web/src/
     account/page.tsx
     users/page.tsx
     globals.css
-    decks/[id]/page.tsx     # fila do dia
+    decks/[id]/page.tsx     # estudo: deck inteiro ou fila do dia
     decks/[id]/cards/page.tsx
     history/page.tsx        # histórico de revisões
     stats/page.tsx

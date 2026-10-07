@@ -44,6 +44,8 @@ export type Scheduled = {
   easy: string;
 };
 
+export type StudyScope = "all" | "day";
+
 export type StudyQueue = {
   cards: Flashcard[];
   counts: { new: number; learn: number; due: number };
@@ -140,8 +142,9 @@ export function getFlashcards(deckId: string, q?: string) {
   return request<Flashcard[]>(`/decks/${deckId}/flashcards${query}`);
 }
 
-export function getStudy(deckId: string) {
-  return request<StudyQueue>(`/decks/${deckId}/study`);
+export function getStudy(deckId: string, scope: StudyScope = "all") {
+  const query = scope === "day" ? "?scope=day" : "";
+  return request<StudyQueue>(`/decks/${deckId}/study${query}`);
 }
 
 export function deleteDeck(id: string) {

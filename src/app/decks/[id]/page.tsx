@@ -22,6 +22,7 @@ import {
   getStudy,
   renameDeck,
   reviewCard,
+  StudyScope,
   undoReview,
 } from "../../../lib/api";
 
@@ -61,27 +62,38 @@ export default function StudyPage() {
   const [nextDueAt, setNextDueAt] = useState<string | null>(null);
   const [undoing, setUndoing] = useState(false);
   const [nowTick, setNowTick] = useState(() => Date.now());
+  const [scope, setScope] = useState<StudyScope>("all");
 
   const cardsRef = useRef(cards);
   cardsRef.current = cards;
+  const loadGeneration = useRef(0);
 
   const load = useCallback(async () => {
+    const generation = ++loadGeneration.current;
     try {
-      const [d, study] = await Promise.all([getDeck(deckId), getStudy(deckId)]);
+      const [d, study] = await Promise.all([getDeck(deckId), getStudy(deckId, scope)]);
+      if (generation !== loadGeneration.current) return;
       setDeck(d);
       setCards(study.cards);
       setNextDueAt(study.nextDueAt);
       setError(null);
     } catch (err) {
+      if (generation !== loadGeneration.current) return;
       setError(err instanceof Error ? err.message : "Falha ao carregar");
     } finally {
-      setLoading(false);
+      if (generation === loadGeneration.current) setLoading(false);
     }
-  }, [deckId]);
+  }, [deckId, scope]);
 
   useEffect(() => {
     void load();
   }, [load]);
+
+  useEffect(() => {
+    setIndex(0);
+    setFlipped(false);
+    setConfirmingDelete(false);
+  }, [scope]);
 
   useEffect(() => {
     if (cards.length > 0 || !nextDueAt) return;
@@ -116,13 +128,19 @@ export default function StudyPage() {
     async (rating: ReviewRating) => {
       const card = cardsRef.current[Math.min(index, Math.max(cardsRef.current.length - 1, 0))];
       if (!card || reviewing) return;
+      const reviewedIndex = Math.min(index, Math.max(cardsRef.current.length - 1, 0));
       setReviewing(true);
       try {
         await reviewCard(card._id, rating);
-        const study = await getStudy(deckId);
+        const study = await getStudy(deckId, scope);
         setCards(study.cards);
         setNextDueAt(study.nextDueAt);
-        setIndex(0);
+        if (scope === "all") {
+          const last = Math.max(study.cards.length - 1, 0);
+          setIndex(Math.min(reviewedIndex + 1, last));
+        } else {
+          setIndex(0);
+        }
         setFlipped(false);
         setConfirmingDelete(false);
         setError(null);
@@ -132,18 +150,23 @@ export default function StudyPage() {
         setReviewing(false);
       }
     },
-    [deckId, index, reviewing],
+    [deckId, index, reviewing, scope],
   );
 
   const undoLast = useCallback(async () => {
     if (undoing || reviewing) return;
     setUndoing(true);
     try {
-      await undoReview();
-      const study = await getStudy(deckId);
+      const undone = await undoReview();
+      const study = await getStudy(deckId, scope);
       setCards(study.cards);
       setNextDueAt(study.nextDueAt);
-      setIndex(0);
+      if (scope === "all") {
+        const found = study.cards.findIndex((item) => item._id === undone._id);
+        setIndex(found >= 0 ? found : 0);
+      } else {
+        setIndex(0);
+      }
       setFlipped(false);
       setError(null);
     } catch (err) {
@@ -151,7 +174,7 @@ export default function StudyPage() {
     } finally {
       setUndoing(false);
     }
-  }, [deckId, reviewing, undoing]);
+  }, [deckId, reviewing, scope, undoing]);
 
   useEffect(() => {
     function onKey(event: KeyboardEvent) {
@@ -226,11 +249,12 @@ export default function StudyPage() {
     }
     setSavingCard(true);
     try {
-      await createCard(deckId, front, back);
-      const study = await getStudy(deckId);
+      const created = await createCard(deckId, front, back);
+      const study = await getStudy(deckId, scope);
       setCards(study.cards);
       setNextDueAt(study.nextDueAt);
-      setIndex(0);
+      const createdIndex = study.cards.findIndex((item) => item._id === created._id);
+      setIndex(createdIndex >= 0 ? createdIndex : 0);
       setFlipped(false);
       setFrontDraft("");
       setBackDraft("");
@@ -257,11 +281,16 @@ export default function StudyPage() {
     if (!current || deleting || locked) return;
     setDeleting(true);
     try {
+      const removedIndex = Math.min(index, Math.max(cards.length - 1, 0));
       await deleteCard(current._id);
-      const study = await getStudy(deckId);
+      const study = await getStudy(deckId, scope);
       setCards(study.cards);
       setNextDueAt(study.nextDueAt);
-      setIndex(0);
+      if (scope === "all") {
+        setIndex(Math.min(removedIndex, Math.max(study.cards.length - 1, 0)));
+      } else {
+        setIndex(0);
+      }
       setFlipped(false);
       setConfirmingDelete(false);
       setDeck((prev) =>
@@ -359,12 +388,12 @@ export default function StudyPage() {
             aria-valuemin={1}
             aria-valuemax={cards.length}
             aria-valuenow={safeIndex + 1}
-            aria-label="Posição na fila"
+            aria-label={scope === "day" ? "Posição na fila" : "Posição no deck"}
           >
             <div className="h-full bg-accent" style={{ width: `${progressPct}%` }} />
           </div>
         ) : null}
-        <div className="flex gap-3">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
           <Link
             href={`/decks/${deckId}/cards`}
             className="text-xs font-medium text-muted hover:text-ink"
@@ -383,6 +412,32 @@ export default function StudyPage() {
           >
             Renomear
           </button>
+          <div className="ml-auto flex gap-3" role="group" aria-label="Modo de estudo">
+            <button
+              type="button"
+              aria-pressed={scope === "all"}
+              onClick={() => setScope("all")}
+              className={`border-b py-1 text-xs font-medium ${
+                scope === "all"
+                  ? "border-accent text-ink"
+                  : "border-transparent text-muted hover:text-ink"
+              }`}
+            >
+              Deck inteiro
+            </button>
+            <button
+              type="button"
+              aria-pressed={scope === "day"}
+              onClick={() => setScope("day")}
+              className={`border-b py-1 text-xs font-medium ${
+                scope === "day"
+                  ? "border-accent text-ink"
+                  : "border-transparent text-muted hover:text-ink"
+              }`}
+            >
+              Fila do dia
+            </button>
+          </div>
         </div>
       </div>
 
@@ -474,9 +529,11 @@ export default function StudyPage() {
         <p className="border border-line bg-panel px-4 py-5 text-sm text-muted">
           {deckEmpty
             ? "Este deck ainda não tem flashcards."
-            : nextDueAt
+            : scope === "day" && nextDueAt
               ? `Próximo card em ${waitSeconds}s.`
-              : "Deck em dia."}
+              : scope === "day"
+                ? "Deck em dia."
+                : "Nenhum card ativo neste deck."}
         </p>
       )}
 
