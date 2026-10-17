@@ -11,6 +11,7 @@ export type Deck = {
   cardCount: number;
   errorMessage?: string;
   subject?: string;
+  disciplina?: string;
   generationMethod?: "openai" | "heuristic";
   generationNote?: string;
   newCount?: number;
@@ -151,12 +152,16 @@ export function deleteDeck(id: string) {
   return request<void>(`/decks/${id}`, { method: "DELETE" });
 }
 
-export function renameDeck(id: string, title: string) {
+export function updateDeck(id: string, data: { title?: string; disciplina?: string }) {
   return request<Deck>(`/decks/${id}`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ title }),
+    body: JSON.stringify(data),
   });
+}
+
+export function renameDeck(id: string, title: string) {
+  return updateDeck(id, { title });
 }
 
 export function createCard(deckId: string, front: string, back: string) {
@@ -197,6 +202,186 @@ export async function uploadPdf(file: File) {
     method: "POST",
     body: form,
   });
+}
+
+export type AssuntoEdital = {
+  id: number;
+  nome: string;
+  teoria: number;
+  revisao: number;
+  questoes: number;
+  horas: number;
+};
+
+export type DisciplinaEdital = {
+  id: number;
+  nome: string;
+  assuntos: AssuntoEdital[];
+};
+
+export type EditalResumo = {
+  id: number;
+  cargo: string;
+  status: "publicado";
+  banca: { id: number; nome: string };
+};
+
+export type Edital = EditalResumo & {
+  disciplinas: DisciplinaEdital[];
+};
+
+export function listEditais() {
+  return request<EditalResumo[]>("/editais");
+}
+
+export function getEdital(id: number) {
+  return request<Edital>(`/editais/${id}`);
+}
+
+export function uploadEditalCsv(arquivo: File, banca: string, cargo: string) {
+  const form = new FormData();
+  form.append("arquivo", arquivo);
+  form.append("banca", banca);
+  form.append("cargo", cargo);
+  return request<Edital>("/editais/csv", {
+    method: "POST",
+    body: form,
+  });
+}
+
+export type DisciplinaResumo = {
+  id: number;
+  nome: string;
+  topicos: number;
+};
+
+export type Topico = {
+  id: number;
+  nome: string;
+  filhos: Topico[];
+};
+
+export type Disciplina = {
+  id: number;
+  nome: string;
+  topicos: Topico[];
+};
+
+export function listDisciplinas() {
+  return request<DisciplinaResumo[]>("/disciplinas");
+}
+
+export function getDisciplina(id: number) {
+  return request<Disciplina>(`/disciplinas/${id}`);
+}
+
+export async function listDisciplinasDosEditais() {
+  const editais = await listEditais();
+  const detalhes = await Promise.all(editais.map((edital) => getEdital(edital.id)));
+  const nomes = new Set<string>();
+  for (const edital of detalhes) {
+    for (const disciplina of edital.disciplinas) nomes.add(disciplina.nome);
+  }
+  return [...nomes];
+}
+
+export type Dashboard = {
+  resumo: {
+    semana: { atualSegundos: number; anteriorSegundos: number };
+    acertos: { dias: number; total: number; corretas: number; taxa: number | null };
+    sequencia: number;
+    revisoesHoje: { topicos: number; cards: number };
+  };
+};
+
+export function getDashboard() {
+  return request<Dashboard>("/dashboard");
+}
+
+export type SemanaDesempenho = { numero: number; inicio: string; fim: string };
+
+export type DesempenhoSemana = {
+  semana: SemanaDesempenho;
+  dias: {
+    dia: string;
+    segundos: number;
+    questoes: number;
+    corretas: number;
+    taxa: number | null;
+    futuro: boolean;
+  }[];
+  totais: { segundos: number; questoes: number; corretas: number; taxa: number | null };
+  semanas: SemanaDesempenho[];
+};
+
+export type PeriodoDesempenho = 7 | 30 | 90;
+
+export type DesempenhoDisciplina = {
+  disciplina: string;
+  segundos: number;
+  questoes: number;
+  corretas: number;
+  naoAcertou: number;
+  taxa: number | null;
+  participacaoTempo: number;
+  participacaoQuestoes: number;
+  poucosDados: boolean;
+};
+
+export type DesempenhoDisciplinas = {
+  periodo: { dias: PeriodoDesempenho; inicio: string; fim: string };
+  disciplinas: DesempenhoDisciplina[];
+  totais: { segundos: number; questoes: number; corretas: number; taxa: number | null };
+};
+
+export function getDesempenhoSemana(dia?: string) {
+  const query = dia ? `?dia=${encodeURIComponent(dia)}` : "";
+  return request<DesempenhoSemana>(`/desempenho/semana${query}`);
+}
+
+export function getDesempenhoDisciplinas(dias: PeriodoDesempenho) {
+  return request<DesempenhoDisciplinas>(`/desempenho/disciplinas?dias=${dias}`);
+}
+
+export type Sessao = {
+  id: string;
+  disciplina: string;
+  editalId: number | null;
+  linhaId: number | null;
+  status: "aberta" | "concluida";
+  iniciadaEm: string;
+  rodandoDesde: string | null;
+  liquidoSegundos: number;
+  questoes: number;
+  acertos: number;
+};
+
+export function iniciarSessao(data: { disciplina: string; editalId?: number; linhaId?: number }) {
+  return request<Sessao>("/sessoes", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+}
+
+export function pausarSessao(id: string) {
+  return request<Sessao>(`/sessoes/${id}/pausar`, { method: "POST" });
+}
+
+export function retomarSessao(id: string) {
+  return request<Sessao>(`/sessoes/${id}/retomar`, { method: "POST" });
+}
+
+export function concluirSessao(id: string, data: { questoes: number; acertos: number }) {
+  return request<Sessao>(`/sessoes/${id}/concluir`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+}
+
+export function descartarSessao(id: string) {
+  return request<void>(`/sessoes/${id}`, { method: "DELETE" });
 }
 
 export type ReviewRating = "again" | "hard" | "good" | "easy";
@@ -261,6 +446,14 @@ export function updateUser(
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
+  });
+}
+
+export function updateMe(nome: string) {
+  return request<AuthUser>("/users/me", {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ nome }),
   });
 }
 

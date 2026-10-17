@@ -1,19 +1,35 @@
 @import "tailwindcss";
 
 :root {
-  --ink: #12202b;
-  --paper: #eef3f6;
-  --panel: #f7fafc;
+  --ink: #111c24;
+  --paper: #f4f6f7;
+  --panel: #ffffff;
   --accent: #0b6e4f;
   --accent-deep: #084c37;
-  --line: #c9d4dc;
-  --muted: #5b6b76;
+  --line: #e1e7eb;
+  --muted: #55656f;
   --ok: #0b6e4f;
   --warn: #9a6700;
   --bad: #b42318;
+  --serie-tempo: #2f6690;
+  --serie-questoes: #b7791f;
+  --materia-1: #0b6e4f;
+  --materia-2: #2f6690;
+  --materia-3: #b7791f;
+  --materia-4: #0e7490;
+  --materia-5: #9f1239;
+  --materia-6: #4b5563;
 }
 
 @theme inline {
+  --color-materia-1: var(--materia-1);
+  --color-materia-2: var(--materia-2);
+  --color-materia-3: var(--materia-3);
+  --color-materia-4: var(--materia-4);
+  --color-materia-5: var(--materia-5);
+  --color-materia-6: var(--materia-6);
+  --color-serie-tempo: var(--serie-tempo);
+  --color-serie-questoes: var(--serie-questoes);
   --color-ink: var(--ink);
   --color-paper: var(--paper);
   --color-panel: var(--panel);
@@ -26,6 +42,8 @@
   --color-bad: var(--bad);
   --font-sans: var(--font-sans);
   --font-display: var(--font-display);
+  --shadow-card: 0 1px 2px rgb(17 28 36 / 0.05);
+  --shadow-pop: 0 8px 24px -6px rgb(17 28 36 / 0.16);
 }
 
 body {
@@ -34,16 +52,17 @@ body {
   color: var(--ink);
   font-family: var(--font-sans), system-ui, sans-serif;
   background-color: var(--paper);
-  background-image:
-    linear-gradient(rgba(18, 32, 43, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(18, 32, 43, 0.03) 1px, transparent 1px),
-    radial-gradient(circle at 100% 0%, rgba(11, 110, 79, 0.12), transparent 40%);
-  background-size: 24px 24px, 24px 24px, auto;
 }
 
-a {
-  color: inherit;
-  text-decoration: none;
+@layer base {
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  ::selection {
+    background: rgb(11 110 79 / 0.18);
+  }
 }
 
 .account-menu > summary {

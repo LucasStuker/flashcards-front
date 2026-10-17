@@ -1,13 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { AppShell } from "../../components/AppShell";
+import { PageContainer } from "@/components/PageContainer";
 import {
   getHistory,
   HistoryItem,
   HistoryResponse,
   ReviewOutcome,
-} from "../../lib/api";
+} from "@/lib/api";
 
 type Filter = "all" | ReviewOutcome;
 
@@ -72,7 +72,7 @@ export default function HistoryPage() {
   }
 
   return (
-    <AppShell>
+    <PageContainer>
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h1
           className="text-xl text-ink"
@@ -144,7 +144,7 @@ export default function HistoryPage() {
           Mostrando as 200 fichas mais recentes deste filtro.
         </p>
       ) : null}
-    </AppShell>
+    </PageContainer>
   );
 }
 

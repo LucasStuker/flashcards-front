@@ -1,13 +1,21 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { AppShell } from "../components/AppShell";
-import { DeckList } from "../components/DeckList";
-import { ImportDeck } from "../components/ImportDeck";
-import { Deck, deleteDeck, listDecks, renameDeck, uploadPdf } from "../lib/api";
+import { PageContainer } from "@/components/PageContainer";
+import { DeckList } from "@/components/DeckList";
+import { ImportDeck } from "@/components/ImportDeck";
+import {
+  Deck,
+  deleteDeck,
+  listDecks,
+  listDisciplinasDosEditais,
+  updateDeck,
+  uploadPdf,
+} from "@/lib/api";
 
-export default function HomePage() {
+export default function DecksPage() {
   const [decks, setDecks] = useState<Deck[]>([]);
+  const [disciplinas, setDisciplinas] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -28,6 +36,20 @@ export default function HomePage() {
     void refresh();
   }, [refresh]);
 
+  useEffect(() => {
+    let active = true;
+    void listDisciplinasDosEditais()
+      .then((nomes) => {
+        if (active) setDisciplinas(nomes);
+      })
+      .catch(() => {
+        // Sem catálogo, a disciplina continua em texto livre.
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
   const hasProcessing = decks.some((d) => d.status === "processing");
 
   useEffect(() => {
@@ -43,14 +65,15 @@ export default function HomePage() {
     setDecks((prev) => prev.filter((deck) => deck._id !== id));
   }
 
-  async function handleRename(id: string, title: string) {
-    const updated = await renameDeck(id, title);
+  async function handleSave(id: string, data: { title: string; disciplina: string }) {
+    const updated = await updateDeck(id, data);
     setDecks((prev) =>
       prev.map((deck) =>
         deck._id === id
           ? {
               ...deck,
               ...updated,
+              disciplina: updated.disciplina,
               newCount: updated.newCount ?? deck.newCount,
               learnCount: updated.learnCount ?? deck.learnCount,
               dueCount: updated.dueCount ?? deck.dueCount,
@@ -79,14 +102,9 @@ export default function HomePage() {
   }
 
   return (
-    <AppShell
-      action={<ImportDeck onFile={handleFile} uploading={uploading} />}
-    >
+    <PageContainer action={<ImportDeck onFile={handleFile} uploading={uploading} />}>
       {error ? (
-        <p
-          role="alert"
-          className="border border-bad/30 bg-bad/5 px-3 py-2 text-sm text-bad"
-        >
+        <p role="alert" className="border border-bad/30 bg-bad/5 px-3 py-2 text-sm text-bad">
           {error}
         </p>
       ) : null}
@@ -95,16 +113,13 @@ export default function HomePage() {
         decks={decks}
         loading={loading}
         hasProcessing={hasProcessing}
-        onRename={handleRename}
+        disciplinas={disciplinas}
+        onSave={handleSave}
         onDelete={handleDelete}
         empty={
-          <ImportDeck
-            variant="dropzone"
-            onFile={handleFile}
-            uploading={uploading}
-          />
+          <ImportDeck variant="dropzone" onFile={handleFile} uploading={uploading} />
         }
       />
-    </AppShell>
+    </PageContainer>
   );
 }

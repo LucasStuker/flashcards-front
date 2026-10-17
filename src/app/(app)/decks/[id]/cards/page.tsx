@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { FormEvent, useCallback, useEffect, useState } from "react";
-import { AppShell } from "../../../../components/AppShell";
+import { PageContainer } from "@/components/PageContainer";
 import {
   Deck,
   Flashcard,
@@ -11,7 +11,7 @@ import {
   getDeck,
   getFlashcards,
   updateCard,
-} from "../../../../lib/api";
+} from "@/lib/api";
 
 export default function DeckCardsPage() {
   const params = useParams<{ id: string }>();
@@ -102,7 +102,7 @@ export default function DeckCardsPage() {
   }
 
   return (
-    <AppShell>
+    <PageContainer>
       <div className="flex items-baseline justify-between gap-3">
         <div className="min-w-0">
           <Link href={`/decks/${deckId}`} className="text-sm font-medium text-accent hover:text-accent-deep">
@@ -252,6 +252,6 @@ export default function DeckCardsPage() {
           ))}
         </ul>
       )}
-    </AppShell>
+    </PageContainer>
   );
 }

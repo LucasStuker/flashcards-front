@@ -9,7 +9,8 @@ type Props = {
   loading: boolean;
   hasProcessing: boolean;
   empty: ReactNode;
-  onRename: (id: string, title: string) => Promise<void>;
+  disciplinas: string[];
+  onSave: (id: string, data: { title: string; disciplina: string }) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
 };
 
@@ -54,11 +55,13 @@ export function DeckList({
   loading,
   hasProcessing,
   empty,
-  onRename,
+  disciplinas,
+  onSave,
   onDelete,
 }: Props) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draft, setDraft] = useState("");
+  const [draftDisciplina, setDraftDisciplina] = useState("");
   const [saving, setSaving] = useState(false);
   const [rowError, setRowError] = useState<{ id: string; message: string } | null>(null);
   const [confirmingDelete, setConfirmingDelete] = useState<string | null>(null);
@@ -77,6 +80,7 @@ export function DeckList({
   function startRename(deck: Deck) {
     setEditingId(deck._id);
     setDraft(deck.title);
+    setDraftDisciplina(deck.disciplina ?? "");
     setConfirmingDelete(null);
     setRowError(null);
   }
@@ -87,12 +91,12 @@ export function DeckList({
     setSaving(true);
     setRowError(null);
     try {
-      await onRename(editingId, draft);
+      await onSave(editingId, { title: draft, disciplina: draftDisciplina.trim() });
       setEditingId(null);
     } catch (err) {
       setRowError({
         id: editingId,
-        message: err instanceof Error ? err.message : "Falha ao renomear",
+        message: err instanceof Error ? err.message : "Falha ao salvar",
       });
     } finally {
       setSaving(false);
@@ -170,6 +174,21 @@ export function DeckList({
                         autoFocus
                         className="min-w-0 flex-1 border border-line bg-paper px-2 py-1 text-sm text-ink"
                       />
+                      <label className="sr-only" htmlFor={`disciplina-${deck._id}`}>
+                        Disciplina
+                      </label>
+                      <input
+                        id={`disciplina-${deck._id}`}
+                        value={draftDisciplina}
+                        onChange={(event) => setDraftDisciplina(event.target.value)}
+                        onKeyDown={(event) => {
+                          if (event.key === "Escape") setEditingId(null);
+                        }}
+                        list="disciplinas-dos-editais"
+                        placeholder="Disciplina"
+                        maxLength={120}
+                        className="min-w-0 basis-40 border border-line bg-paper px-2 py-1 text-sm text-ink placeholder:text-muted"
+                      />
                       <button
                         type="submit"
                         disabled={saving || draft.trim().length === 0}
@@ -187,7 +206,12 @@ export function DeckList({
                     </form>
                   ) : (
                     <div className="flex items-start justify-between gap-3">
-                      <p className="min-w-0 font-medium break-words text-ink">{deck.title}</p>
+                      <div className="min-w-0">
+                        <p className="font-medium break-words text-ink">{deck.title}</p>
+                        {deck.disciplina ? (
+                          <p className="text-xs text-muted">{deck.disciplina}</p>
+                        ) : null}
+                      </div>
                       <span className={`shrink-0 text-xs font-medium md:hidden ${statusClass(deck.status)}`}>
                         {statusLabel(deck.status)}
                       </span>
@@ -219,7 +243,7 @@ export function DeckList({
                         onClick={() => startRename(deck)}
                         className="py-1 text-xs font-medium text-muted hover:text-ink disabled:opacity-40"
                       >
-                        Renomear
+                        Editar
                       </button>
                       {deck.status !== "processing" ? (
                         <Link
@@ -286,6 +310,11 @@ export function DeckList({
           })}
         </ul>
       </div>
+      <datalist id="disciplinas-dos-editais">
+        {disciplinas.map((nome) => (
+          <option key={nome} value={nome} />
+        ))}
+      </datalist>
     </section>
   );
 }

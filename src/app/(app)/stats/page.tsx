@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { AppShell } from "../../components/AppShell";
-import { Stats, getStats } from "../../lib/api";
+import { PageContainer } from "@/components/PageContainer";
+import { Stats, getStats } from "@/lib/api";
 
 function formatDay(iso: string) {
   return new Date(iso).toLocaleDateString("pt-BR", {
@@ -32,7 +32,7 @@ export default function StatsPage() {
     stats?.retention == null ? "—" : `${Math.round(stats.retention * 100)}%`;
 
   return (
-    <AppShell>
+    <PageContainer>
       <h1
         className="text-xl text-ink"
         style={{ fontFamily: "var(--font-display), sans-serif" }}
@@ -85,6 +85,6 @@ export default function StatsPage() {
           </table>
         </>
       ) : null}
-    </AppShell>
+    </PageContainer>
   );
 }

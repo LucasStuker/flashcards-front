@@ -1,9 +1,9 @@
 "use client";
 
 import { FormEvent, useCallback, useEffect, useState } from "react";
-import { AppShell } from "../../components/AppShell";
-import { AuthUser } from "../../lib/auth";
-import { createAdmin, listUsers, updateUser } from "../../lib/api";
+import { PageContainer } from "@/components/PageContainer";
+import { AuthUser } from "@/lib/auth";
+import { createAdmin, listUsers, updateUser } from "@/lib/api";
 
 function UsersContent() {
   const [users, setUsers] = useState<AuthUser[]>([]);
@@ -68,7 +68,7 @@ function UsersContent() {
   }
 
   return (
-    <AppShell maxWidth="lg" requireSuperAdmin>
+    <PageContainer maxWidth="lg">
       <header>
         <h1
           className="text-xl text-ink"
@@ -156,7 +156,7 @@ function UsersContent() {
           ))}
         </ul>
       )}
-    </AppShell>
+    </PageContainer>
   );
 }
 

@@ -10,8 +10,8 @@ import {
   useRef,
   useState,
 } from "react";
-import { AppShell } from "../../../components/AppShell";
-import { StudyCard } from "../../../components/StudyCard";
+import { PageContainer } from "@/components/PageContainer";
+import { StudyCard } from "@/components/StudyCard";
 import {
   Deck,
   Flashcard,
@@ -24,7 +24,7 @@ import {
   reviewCard,
   StudyScope,
   undoReview,
-} from "../../../lib/api";
+} from "@/lib/api";
 
 const ratingByKey: Record<string, ReviewRating> = {
   a: "again",
@@ -312,32 +312,32 @@ export default function StudyPage() {
 
   if (loading) {
     return (
-      <AppShell maxWidth="study">
+      <PageContainer maxWidth="study">
         <p className="text-sm text-muted" aria-live="polite">
           Carregando deck…
         </p>
-      </AppShell>
+      </PageContainer>
     );
   }
 
   if (error && !deck) {
     return (
-      <AppShell maxWidth="study">
+      <PageContainer maxWidth="study">
         <p role="alert" className="border border-bad/30 bg-bad/5 px-3 py-2 text-sm text-bad">
           {error}
         </p>
-      </AppShell>
+      </PageContainer>
     );
   }
 
   const progressPct = cards.length === 0 ? 0 : ((safeIndex + 1) / cards.length) * 100;
 
   return (
-    <AppShell maxWidth="study">
+    <PageContainer maxWidth="study">
       <div className="flex flex-col gap-2">
         <div className="flex items-start justify-between gap-3">
           <Link
-            href="/"
+            href="/decks"
             className="text-sm font-medium text-accent hover:text-accent-deep"
           >
             ← Decks
@@ -595,6 +595,6 @@ export default function StudyPage() {
           Novo card
         </button>
       )}
-    </AppShell>
+    </PageContainer>
   );
 }
