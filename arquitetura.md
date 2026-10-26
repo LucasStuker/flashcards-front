@@ -47,8 +47,9 @@ Nest API http://localhost:3001
 | `/history` | `src/app/(app)/history/page.tsx` | Histórico de fichas avaliadas (auth) |
 | `/stats` | `src/app/(app)/stats/page.tsx` | Revisões de hoje, retenção, sequência e previsão |
 | `/desempenho` | `src/app/(app)/desempenho/page.tsx` | Semana por dia (tempo, questões, acerto) e comparação por disciplina (step 20) |
-| `/editais` | `src/app/(app)/editais/page.tsx` | Lista de editais e envio de CSV (auth) |
-| `/editais/[id]` | `src/app/(app)/editais/[id]/page.tsx` | Disciplinas e assuntos do edital, só leitura (auth) |
+| `/editais` | `src/app/(app)/editais/page.tsx` | Editais disponíveis com inscrição (step 21) e planilha própria por CSV (auth) |
+| `/editais/[id]` | `src/app/(app)/editais/[id]/page.tsx` | Disciplinas e assuntos da planilha própria, só leitura (auth) |
+| `/editais/oficiais/[id]` | `src/app/(app)/editais/oficiais/[id]/page.tsx` | Edital oficial: cabeçalho, inscrição e conteúdo programático (auth) |
 | `/disciplinas` | `src/app/(app)/disciplinas/page.tsx` | Catálogo de disciplinas, com a quantidade de tópicos (auth) |
 | `/disciplinas/[id]` | `src/app/(app)/disciplinas/[id]/page.tsx` | Árvore de tópicos da disciplina, só leitura (auth) |
 | `/account` | `src/app/(app)/account/page.tsx` | Nome e troca da própria senha |
@@ -70,6 +71,7 @@ Tipos e funções:
 - `listEditais()`, `getEdital(id)`, `uploadEditalCsv(arquivo, banca, cargo)` — `FormData` com `arquivo`, `banca` e `cargo`
 - `listDisciplinasDosEditais()` — nomes de disciplina de todos os editais do aluno, para sugerir no deck
 - `listDisciplinas()`, `getDisciplina(id)` — catálogo do step 18; tipos `DisciplinaResumo`, `Disciplina` e `Topico` (com `filhos`)
+- `listEditaisOficiais()`, `getEditalOficial(id)`, `inscreverEdital(id)`, `cancelarInscricaoEdital(id)` — step 21; tipos `EditalOficialResumo` (com contagens) e `EditalOficial` (disciplinas com a árvore de tópicos)
 - `getDashboard()` — `GET /dashboard`; tipo `Dashboard` (hoje só `resumo`)
 - Sessão de estudo (step 16): `iniciarSessao({ disciplina, editalId?, linhaId? })`, `pausarSessao(id)`, `retomarSessao(id)`, `concluirSessao(id, { questoes, acertos })`, `descartarSessao(id)`. Ainda sem tela; o cronômetro entra na Parte 3 do dashboard
 
@@ -88,7 +90,7 @@ Sessão (`src/lib/auth.ts`):
 ### Home
 1. Depois do login, `/` é o dashboard.
 2. No topo, `ResumoPainel` (`src/components/dashboard/`) mostra tempo líquido na semana contra a anterior, acertos de 7 dias, sequência e revisões vencidas, numa faixa 2×2 no celular e de 4 colunas a partir de `md`. Erro de `getDashboard` aparece em texto e não esconde o resto da página.
-3. Estudos diz que ainda não há ciclo. Disciplinas leva a `/editais`. Concursos lista os editais (`listEditais`) com banca, cargo e link. Sem concurso, uma linha leva a `/editais`.
+3. Estudos diz que ainda não há ciclo. Disciplinas leva a `/editais`. Concursos lista primeiro os editais oficiais em que o aluno está inscrito (`listEditaisOficiais`, filtrando `inscrito`) e depois as planilhas próprias (`listEditais`), com cargo, órgão ou banca e link. Sem concurso, o vazio leva aos editais disponíveis em `/editais`.
 
 ### Decks
 1. `AuthGate` valida sessão (`/auth/me`).
@@ -115,10 +117,11 @@ Sessão (`src/lib/auth.ts`):
 3. Toque na ficha alterna pergunta e resposta. O PDF não é exibido nem armazenado.
 
 ### Editais
-1. Dashboard (Disciplinas ou Concursos) → `/editais`.
-2. Formulário Banca, Cargo e Arquivo CSV chama `POST /editais/csv`. Erro da API, inclusive `503`, aparece em texto. Sem poll.
-3. A lista mostra banca, cargo e o link do edital. Sem editais: “Ainda não há edital.”
-4. `/editais/[id]` mostra disciplinas e assuntos com teoria, revisão, questões e horas deste aluno. Zero, negativo e decimal aparecem como a API mandou. `404` mostra a mensagem. Sem editar, renomear ou apagar.
+1. Dashboard (Estudos ou Concursos) → `/editais`.
+2. "Editais disponíveis" lista os editais oficiais com cargo, área, órgão, banca, ano e a contagem de disciplinas e tópicos. `BotaoInscricao` (`src/components/editais/`) chama `POST` ou `DELETE /editais-oficiais/:id/inscricao` e troca para "Inscrito" + Cancelar sem recarregar. Erro aparece sob o botão.
+3. `/editais/oficiais/[id]` mostra o cabeçalho, o mesmo botão e uma disciplina recolhível por linha (`<details>`), com a árvore de tópicos (`ArvoreTopicos`, compartilhado com `/disciplinas/[id]`). `404` mostra a mensagem.
+4. "Planilha própria", embaixo: formulário Banca, Cargo e Arquivo CSV chama `POST /editais/csv`. Erro da API, inclusive `503`, aparece em texto. Sem poll. A lista mostra cargo, banca e o link; vazia, não aparece.
+5. `/editais/[id]` mostra disciplinas e assuntos com teoria, revisão, questões e horas deste aluno. Zero, negativo e decimal aparecem como a API mandou. `404` mostra a mensagem. Sem editar, renomear ou apagar.
 
 ### Disciplinas
 1. Sidebar (Planejamento → Disciplinas) → `/disciplinas`. O item fica ativo também em `/disciplinas/[id]`.

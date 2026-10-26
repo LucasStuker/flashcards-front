@@ -3,10 +3,11 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import { ArvoreTopicos } from "@/components/ArvoreTopicos";
 import { PageContainer } from "@/components/PageContainer";
 import { Bloco, EstadoVazio } from "@/components/dashboard/Bloco";
 import { alertaErro, linkAcao } from "@/components/ui";
-import { Disciplina, Topico, getDisciplina } from "@/lib/api";
+import { Disciplina, getDisciplina } from "@/lib/api";
 
 export default function DisciplinaPage() {
   const params = useParams<{ id: string }>();
@@ -69,31 +70,11 @@ export default function DisciplinaPage() {
                 texto="Os tópicos desta disciplina aparecem aqui assim que forem cadastrados."
               />
             ) : (
-              <ArvoreTopicos topicos={disciplina.topicos} nivel={0} />
+              <ArvoreTopicos topicos={disciplina.topicos} />
             )}
           </Bloco>
         </>
       ) : null}
     </PageContainer>
-  );
-}
-
-function ArvoreTopicos({ topicos, nivel }: { topicos: Topico[]; nivel: number }) {
-  return (
-    <ul className={nivel === 0 ? "text-sm" : "border-l border-line pl-3"}>
-      {topicos.map((topico) => (
-        <li
-          key={topico.id}
-          className={nivel === 0 ? "border-b border-line px-4 py-2.5 last:border-0" : "pt-1.5"}
-        >
-          <span className={nivel === 0 ? "font-medium text-ink" : "text-ink/80"}>{topico.nome}</span>
-          {topico.filhos.length > 0 ? (
-            <div className="mt-1.5">
-              <ArvoreTopicos topicos={topico.filhos} nivel={nivel + 1} />
-            </div>
-          ) : null}
-        </li>
-      ))}
-    </ul>
   );
 }

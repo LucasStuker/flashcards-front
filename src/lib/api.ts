@@ -275,6 +275,38 @@ export function getDisciplina(id: number) {
   return request<Disciplina>(`/disciplinas/${id}`);
 }
 
+export type EditalOficialResumo = {
+  id: number;
+  orgao: string;
+  cargo: string;
+  area: string | null;
+  banca: string;
+  ano: number;
+  inscrito: boolean;
+  disciplinas: number;
+  topicos: number;
+};
+
+export type EditalOficial = Omit<EditalOficialResumo, "disciplinas" | "topicos"> & {
+  disciplinas: Disciplina[];
+};
+
+export function listEditaisOficiais() {
+  return request<EditalOficialResumo[]>("/editais-oficiais");
+}
+
+export function getEditalOficial(id: number) {
+  return request<EditalOficial>(`/editais-oficiais/${id}`);
+}
+
+export function inscreverEdital(id: number) {
+  return request<EditalOficial>(`/editais-oficiais/${id}/inscricao`, { method: "POST" });
+}
+
+export function cancelarInscricaoEdital(id: number) {
+  return request<void>(`/editais-oficiais/${id}/inscricao`, { method: "DELETE" });
+}
+
 export async function listDisciplinasDosEditais() {
   const editais = await listEditais();
   const detalhes = await Promise.all(editais.map((edital) => getEdital(edital.id)));

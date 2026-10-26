@@ -8,12 +8,34 @@ import { PageContainer } from "@/components/PageContainer";
 import { Bloco, EstadoVazio } from "@/components/dashboard/Bloco";
 import { ResumoPainel } from "@/components/dashboard/ResumoPainel";
 import { alertaErro, botaoPrimario, botaoSecundario, linkAcao } from "@/components/ui";
-import { Dashboard, EditalResumo, getDashboard, listEditais } from "@/lib/api";
+import { Dashboard, getDashboard, listEditais, listEditaisOficiais } from "@/lib/api";
 import { AuthUser } from "@/lib/auth";
+
+type Concurso = { chave: string; href: string; titulo: string; detalhe: string };
+
+async function listConcursos(): Promise<Concurso[]> {
+  const [oficiais, proprios] = await Promise.all([listEditaisOficiais(), listEditais()]);
+  return [
+    ...oficiais
+      .filter((edital) => edital.inscrito)
+      .map((edital) => ({
+        chave: `oficial-${edital.id}`,
+        href: `/editais/oficiais/${edital.id}`,
+        titulo: edital.area ? `${edital.cargo} · ${edital.area}` : edital.cargo,
+        detalhe: `${edital.orgao} · ${edital.banca} · ${edital.ano}`,
+      })),
+    ...proprios.map((edital) => ({
+      chave: `proprio-${edital.id}`,
+      href: `/editais/${edital.id}`,
+      titulo: edital.cargo,
+      detalhe: `${edital.banca.nome} · planilha própria`,
+    })),
+  ];
+}
 
 export default function HomePage() {
   const user = useStoredUser();
-  const [editais, setEditais] = useState<EditalResumo[]>([]);
+  const [editais, setEditais] = useState<Concurso[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [painel, setPainel] = useState<Dashboard | null>(null);
@@ -42,7 +64,7 @@ export default function HomePage() {
 
   useEffect(() => {
     let active = true;
-    void listEditais()
+    void listConcursos()
       .then((data) => {
         if (!active) return;
         setEditais(data);
@@ -134,10 +156,10 @@ export default function HomePage() {
           <EstadoVazio
             icone="target"
             titulo="Ainda não há concurso"
-            texto="Importe um edital para acompanhar banca, cargo e disciplinas."
+            texto="Inscreva-se em um edital disponível para acompanhar banca, cargo e disciplinas."
             acao={
               <Link href="/editais" className={botaoPrimario}>
-                Ir para editais
+                Ver editais disponíveis
               </Link>
             }
           />
@@ -145,19 +167,17 @@ export default function HomePage() {
         {editais.length > 0 ? (
           <ul className="text-sm">
             {editais.map((edital) => (
-              <li key={edital.id} className="border-b border-line last:border-0">
+              <li key={edital.chave} className="border-b border-line last:border-0">
                 <Link
-                  href={`/editais/${edital.id}`}
+                  href={edital.href}
                   className="group flex items-center gap-3 px-4 py-2.5 transition-colors hover:bg-paper"
                 >
                   <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-accent/10 text-accent">
                     <NavIcon name="target" />
                   </span>
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate font-medium text-ink">{edital.cargo}</span>
-                    <span className="block truncate text-[13px] text-muted">
-                      {edital.banca.nome}
-                    </span>
+                    <span className="block truncate font-medium text-ink">{edital.titulo}</span>
+                    <span className="block truncate text-[13px] text-muted">{edital.detalhe}</span>
                   </span>
                   <NavIcon
                     name="chevron-right"
