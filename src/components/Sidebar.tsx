@@ -14,6 +14,7 @@ type NavItem = {
   /** Sem `href`, o item aparece desabilitado como "em breve". */
   href?: string;
   isActive?: (pathname: string) => boolean;
+  superAdmin?: boolean;
 };
 
 type NavGroup = {
@@ -46,7 +47,12 @@ const groups: NavGroup[] = [
     id: "pratica",
     label: "Prática",
     items: [
-      { label: "Estudo", icon: "timer" },
+      {
+        label: "Estudo",
+        icon: "timer",
+        href: "/estudo",
+        isActive: (p) => p === "/estudo",
+      },
       {
         label: "Decks",
         icon: "cards",
@@ -64,13 +70,27 @@ const groups: NavGroup[] = [
         label: "Concursos",
         icon: "target",
         href: "/editais",
-        isActive: (p) => p === "/editais" || p.startsWith("/editais/"),
+        isActive: (p) =>
+          p === "/editais" || (p.startsWith("/editais/") && !p.startsWith("/editais/importar")),
+      },
+      {
+        label: "Edital verticalizado",
+        icon: "checklist",
+        href: "/verticalizado",
+        isActive: (p) => p === "/verticalizado",
       },
       {
         label: "Disciplinas",
         icon: "folder",
         href: "/disciplinas",
         isActive: (p) => p === "/disciplinas" || p.startsWith("/disciplinas/"),
+      },
+      {
+        label: "Importar editais",
+        icon: "upload",
+        href: "/editais/importar",
+        isActive: (p) => p.startsWith("/editais/importar"),
+        superAdmin: true,
       },
     ],
   },
@@ -246,7 +266,9 @@ export function Sidebar() {
                 {group.label}
               </p>
               <ul aria-labelledby={`nav-${group.id}`} className="flex flex-col gap-0.5">
-                {group.items.map(renderItem)}
+                {group.items
+                  .filter((item) => !item.superAdmin || user?.role === "super_admin")
+                  .map(renderItem)}
               </ul>
             </div>
           ))}

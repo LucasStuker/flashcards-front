@@ -105,3 +105,43 @@ body {
     animation: none;
   }
 }
+
+@keyframes york-vigia-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes cine-vinheta-pulse {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 0.75;
+  }
+}
+
+.york-vigia-float {
+  animation: york-vigia-float 5.5s ease-in-out infinite;
+}
+
+.york-vigia-float-delay {
+  animation-delay: -2.6s;
+}
+
+.cine-vinheta {
+  background: radial-gradient(ellipse at center, transparent 35%, rgb(0 0 0 / 0.55) 100%);
+  animation: cine-vinheta-pulse 10s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .york-vigia-float,
+  .cine-vinheta {
+    animation: none;
+  }
+}

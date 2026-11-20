@@ -8,29 +8,21 @@ import { PageContainer } from "@/components/PageContainer";
 import { Bloco, EstadoVazio } from "@/components/dashboard/Bloco";
 import { ResumoPainel } from "@/components/dashboard/ResumoPainel";
 import { alertaErro, botaoPrimario, botaoSecundario, linkAcao } from "@/components/ui";
-import { Dashboard, getDashboard, listEditais, listEditaisOficiais } from "@/lib/api";
+import { Dashboard, getDashboard, listEditaisOficiais } from "@/lib/api";
 import { AuthUser } from "@/lib/auth";
 
 type Concurso = { chave: string; href: string; titulo: string; detalhe: string };
 
 async function listConcursos(): Promise<Concurso[]> {
-  const [oficiais, proprios] = await Promise.all([listEditaisOficiais(), listEditais()]);
-  return [
-    ...oficiais
-      .filter((edital) => edital.inscrito)
-      .map((edital) => ({
-        chave: `oficial-${edital.id}`,
-        href: `/editais/oficiais/${edital.id}`,
-        titulo: edital.area ? `${edital.cargo} · ${edital.area}` : edital.cargo,
-        detalhe: `${edital.orgao} · ${edital.banca} · ${edital.ano}`,
-      })),
-    ...proprios.map((edital) => ({
-      chave: `proprio-${edital.id}`,
-      href: `/editais/${edital.id}`,
-      titulo: edital.cargo,
-      detalhe: `${edital.banca.nome} · planilha própria`,
-    })),
-  ];
+  const oficiais = await listEditaisOficiais();
+  return oficiais
+    .filter((edital) => edital.inscrito)
+    .map((edital) => ({
+      chave: `oficial-${edital.id}`,
+      href: `/editais/oficiais/${edital.id}`,
+      titulo: edital.area ? `${edital.cargo} · ${edital.area}` : edital.cargo,
+      detalhe: `${edital.orgao} · ${edital.banca} · ${edital.ano}`,
+    }));
 }
 
 export default function HomePage() {
@@ -116,12 +108,22 @@ export default function HomePage() {
         <Bloco id="estudos-heading" titulo="Ciclo de estudos" className="md:col-span-3">
           <EstadoVazio
             icone="timer"
-            titulo="Ainda não há ciclo de estudos"
-            texto="O ciclo segue as disciplinas do concurso que você estuda."
+            titulo={editais.length > 0 ? "Pronto para estudar" : "Ainda não há ciclo de estudos"}
+            texto={
+              editais.length > 0
+                ? "Abra o cronômetro numa disciplina do seu concurso. O tempo e as questões entram no dashboard."
+                : "Inscreva-se em um edital para estudar com o cronômetro."
+            }
             acao={
-              <Link href="/editais" className={botaoSecundario}>
-                Escolher concurso
-              </Link>
+              editais.length > 0 ? (
+                <Link href="/estudo" className={botaoPrimario}>
+                  Ir para Estudo
+                </Link>
+              ) : (
+                <Link href="/editais" className={botaoSecundario}>
+                  Escolher concurso
+                </Link>
+              )
             }
           />
         </Bloco>

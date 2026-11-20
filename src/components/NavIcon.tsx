@@ -4,15 +4,19 @@ import {
   ChevronRight,
   ChevronsUpDown,
   CircleCheck,
+  FileUp,
   Flame,
   Folder,
   House,
   Layers,
+  ListChecks,
   type LucideIcon,
   Menu,
+  Plus,
   Repeat,
   Target,
   Timer,
+  X,
 } from "lucide-react";
 
 const icones = {
@@ -29,6 +33,10 @@ const icones = {
   flame: Flame,
   repeat: Repeat,
   menu: Menu,
+  checklist: ListChecks,
+  upload: FileUp,
+  plus: Plus,
+  close: X,
 } satisfies Record<string, LucideIcon>;
 
 export type NavIconName = keyof typeof icones;
