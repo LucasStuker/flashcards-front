@@ -8,7 +8,7 @@ import { navItemClass } from "./Sidebar";
 type Props = {
   children: ReactNode;
   action?: ReactNode;
-  maxWidth?: "md" | "study" | "lg" | "wide";
+  maxWidth?: "md" | "study" | "lg" | "wide" | "full";
 };
 
 const widths = {
@@ -16,6 +16,7 @@ const widths = {
   study: "max-w-xl",
   lg: "max-w-3xl",
   wide: "max-w-7xl",
+  full: "max-w-none",
 };
 
 const deckAreaItems = [

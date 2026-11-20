@@ -46,16 +46,19 @@ Nest API http://localhost:3001
 | `/decks/[id]/cards` | `src/app/(app)/decks/[id]/cards/page.tsx` | Navegador do deck (auth) |
 | `/history` | `src/app/(app)/history/page.tsx` | Histórico de fichas avaliadas (auth) |
 | `/stats` | `src/app/(app)/stats/page.tsx` | Revisões de hoje, retenção, sequência e previsão |
+| `/estudo` | `src/app/(app)/estudo/page.tsx` | Sessão cronometrada no edital inscrito: disciplina, tópico opcional, pausar/concluir (step 24, auth) |
 | `/desempenho` | `src/app/(app)/desempenho/page.tsx` | Semana por dia (tempo, questões, acerto) e comparação por disciplina (step 20) |
-| `/editais` | `src/app/(app)/editais/page.tsx` | Editais disponíveis com inscrição (step 21) e planilha própria por CSV (auth) |
-| `/editais/[id]` | `src/app/(app)/editais/[id]/page.tsx` | Disciplinas e assuntos da planilha própria, só leitura (auth) |
+| `/editais` | `src/app/(app)/editais/page.tsx` | Editais disponíveis com inscrição (step 21, auth) |
 | `/editais/oficiais/[id]` | `src/app/(app)/editais/oficiais/[id]/page.tsx` | Edital oficial: cabeçalho, inscrição e conteúdo programático (auth) |
+| `/editais/importar` | `src/app/(app)/editais/importar/page.tsx` | Upload do arquivo do edital e lista de importações, com poll em `processando` (step 23, só super_admin) |
+| `/editais/importar/[id]` | `src/app/(app)/editais/importar/[id]/page.tsx` | Revisão do rascunho extraído e publicação por cargo (step 23, só super_admin) |
+| `/verticalizado` | `src/app/(app)/verticalizado/page.tsx` | Edital verticalizado do edital inscrito (`?edital=id`): teoria, R1–R3 e questões por tópico (step 22, auth) |
 | `/disciplinas` | `src/app/(app)/disciplinas/page.tsx` | Catálogo de disciplinas, com a quantidade de tópicos (auth) |
 | `/disciplinas/[id]` | `src/app/(app)/disciplinas/[id]/page.tsx` | Árvore de tópicos da disciplina, só leitura (auth) |
 | `/account` | `src/app/(app)/account/page.tsx` | Nome e troca da própria senha |
 | `/users` | `src/app/(app)/users/page.tsx` | CRUD admins (só super_admin) |
 
-Layout global: `src/app/layout.tsx` (metadata, fontes, CSS). Layout autenticado: `src/app/(app)/layout.tsx` (`AuthGate`, `Sidebar`, `<main>` com rolagem). `/users` tem `src/app/(app)/users/layout.tsx` com `AuthGate requireSuperAdmin`. As URLs não incluem `(app)`.
+Layout global: `src/app/layout.tsx` (metadata, fontes, CSS). Layout autenticado: `src/app/(app)/layout.tsx` (`AuthGate`, `Sidebar`, `<main>` com rolagem). `/users` e `/editais/importar` têm `layout.tsx` com `AuthGate requireSuperAdmin`. As URLs não incluem `(app)`.
 
 ## Camada de API (`src/lib/api.ts`)
 
@@ -68,12 +71,13 @@ Tipos e funções:
 - `updateDeck(id, { title?, disciplina? })` (string vazia limpa a disciplina), `renameDeck(id, title)`, `deleteDeck(id)`, `createCard(deckId, front, back)`, `deleteCard(id)`, `updateCard(id, data)`, `undoReview()`, `getStats()`
 - `getHistory(outcome?)` — `GET /history`; `correct` (Bom/Fácil), `wrong` (Errei), `unsure` (Dúvida)
 - `listUsers()`, `createAdmin()`, `updateUser()`, `changeOwnPassword()`
-- `listEditais()`, `getEdital(id)`, `uploadEditalCsv(arquivo, banca, cargo)` — `FormData` com `arquivo`, `banca` e `cargo`
-- `listDisciplinasDosEditais()` — nomes de disciplina de todos os editais do aluno, para sugerir no deck
+- `listDisciplinasDosEditais()` — nomes de disciplina dos editais oficiais em que o aluno está inscrito, para sugerir no deck
 - `listDisciplinas()`, `getDisciplina(id)` — catálogo do step 18; tipos `DisciplinaResumo`, `Disciplina` e `Topico` (com `filhos`)
 - `listEditaisOficiais()`, `getEditalOficial(id)`, `inscreverEdital(id)`, `cancelarInscricaoEdital(id)` — step 21; tipos `EditalOficialResumo` (com contagens) e `EditalOficial` (disciplinas com a árvore de tópicos)
+- `getVerticalizado(editalId)`, `salvarProgressoTopico(editalId, topicoId, progresso)` — step 22; tipos `Verticalizado`, `TopicoVerticalizado`, `ProgressoTopico` e `ResumoProgresso`. O `PUT` devolve o quadro inteiro já somado
+- `listImportacoes()`, `enviarArquivoEdital(file)`, `getImportacao(id)`, `salvarRascunhoEdital(id, rascunho)`, `publicarImportacao(id, cargo)`, `descartarImportacao(id)` — step 23; tipos `ImportacaoResumo`, `ImportacaoDetalhe`, `RascunhoEdital` (cargos → disciplinas com `casarCom?` → `NoExtraido`) e `PreviaCargo`
 - `getDashboard()` — `GET /dashboard`; tipo `Dashboard` (hoje só `resumo`)
-- Sessão de estudo (step 16): `iniciarSessao({ disciplina, editalId?, linhaId? })`, `pausarSessao(id)`, `retomarSessao(id)`, `concluirSessao(id, { questoes, acertos })`, `descartarSessao(id)`. Ainda sem tela; o cronômetro entra na Parte 3 do dashboard
+- Sessão de estudo (step 24): `sessaoAberta()`, `iniciarSessao({ disciplina, editalId?, topicoId? })`, `pausarSessao(id)`, `retomarSessao(id)`, `concluirSessao(id, { questoes, acertos })`, `descartarSessao(id)`. Tela `/estudo`
 
 Sessão (`src/lib/auth.ts`):
 
@@ -90,7 +94,25 @@ Sessão (`src/lib/auth.ts`):
 ### Home
 1. Depois do login, `/` é o dashboard.
 2. No topo, `ResumoPainel` (`src/components/dashboard/`) mostra tempo líquido na semana contra a anterior, acertos de 7 dias, sequência e revisões vencidas, numa faixa 2×2 no celular e de 4 colunas a partir de `md`. Erro de `getDashboard` aparece em texto e não esconde o resto da página.
-3. Estudos diz que ainda não há ciclo. Disciplinas leva a `/editais`. Concursos lista primeiro os editais oficiais em que o aluno está inscrito (`listEditaisOficiais`, filtrando `inscrito`) e depois as planilhas próprias (`listEditais`), com cargo, órgão ou banca e link. Sem concurso, o vazio leva aos editais disponíveis em `/editais`.
+3. Com inscrição, Estudos aponta para `/estudo` (cronômetro). Sem inscrição, leva a `/editais`. Disciplinas leva a `/editais`. Concursos lista os editais oficiais inscritos (`listEditaisOficiais`, filtrando `inscrito`), com cargo, órgão, banca e link. Sem concurso, o vazio leva aos editais disponíveis em `/editais`.
+
+### Estudo (sessão)
+1. Sidebar (Prática → Estudo) → `/estudo`, ou "Ir para Estudo" na home.
+2. Sem inscrição: vazio com link para `/editais`.
+3. Com inscrição: escolhe concurso (se houver mais de um), disciplina e tópico opcional (só folhas). `Iniciar sessão`.
+4. Rodando: cronômetro compacto na página (padrão). Botão “Modo cinema” abre `SessaoCinematica` em tela cheia (Fullscreen API) com timer grande, Ruby e Meguinha, carrossel de frases e controles em idle; “Sair do modo cinema” ou Esc volta ao compacto. `GET /sessoes/aberta` restaura a sessão ao recarregar.
+5. Ritmo: livre, Pomodoro 25+5 ou 50+10 (step 26). Countdown por deadline; bipe via Web Audio agendado no clique e Notification se autorizada. Pausar congela o ciclo.
+6. Ruído ambiente opcional (rosa, marrom, ventilador, chuva) gerado no client com Web Audio (`src/lib/ruido-estudo.ts`); volume ajustável na sessão.
+7. Concluir soma no resumo diário. Com tópico escolhido, questões/acertos somam no verticalizado (step 25); link “Ver verticalizado” no aviso.
+
+### Cronograma
+1. Sidebar → `/cronograma`.
+2. Horários livres (`PUT /cronograma/disponibilidade`) — janelas recorrentes da semana.
+3. **Como você está?** — autoavaliação fraco/ok/forte por matéria (`PUT /cronograma/autoavaliacao`); mistura fixa 50% questionário / 50% desempenho.
+4. Matérias vêm do edital inscrito (`GET /cronograma/materias`).
+5. **Gerar plano** (`POST /cronograma/plano`) — horizonte até a data da prova (ou 8 semanas); estratégia via OpenAI com fallback heurístico; materializa todas as semanas nos slots.
+6. **Regenerar semana** (`POST /cronograma/gerar`) — só a semana visível; reutiliza pesos do plano se existir. Blocos saem **intercalados** (evita empilhar a mesma matéria) com **modo** `teoria` / `questoes` / `revisao` / `misto`.
+7. Drag/resize continua via `POST/PATCH/DELETE /cronograma/blocos`; o modo é editável no painel do bloco.
 
 ### Decks
 1. `AuthGate` valida sessão (`/auth/me`).
@@ -98,10 +120,10 @@ Sessão (`src/lib/auth.ts`):
 3. Poll a cada 2s enquanto houver deck `processing` (feedback vivo na UI).
 4. “Novo deck” no topo da coluna (file picker); dropzone só se a lista estiver vazia.
 5. Lista na coluna, sem rolagem horizontal. O nome quebra a linha; `generationNote` / erro ficam na linha do deck.
-6. CTA Estudar só quando `ready`. Novos, Aprender e Revisar aparecem na tabela no desktop e numa linha no celular. Editar, Cards e Excluir ficam com o nome. Editar troca nome e disciplina no mesmo formulário; a disciplina sugere as dos editais e aceita texto livre, e aparece sob o nome. Editar fica bloqueado enquanto `processing`.
+6. CTA Estudar só quando `ready`. Novos, Aprender e Revisar aparecem na tabela no desktop e numa linha no celular. Editar, Cards e Excluir ficam com o nome. Editar troca nome e disciplina no mesmo formulário; a disciplina sugere as dos editais em que o aluno está inscrito e aceita texto livre, e aparece sob o nome. Editar fica bloqueado enquanto `processing`.
 7. Em `/decks`, `/history` e `/stats`, uma faixa troca entre Decks, Histórico e Estatísticas. O item Decks da sidebar fica ativo nessas rotas e também no estudo e no navegador de cards.
 
-### Estudo
+### Estudo de cards (deck)
 1. Carrega `GET /decks/:id/study` no modo deck inteiro (API rejeita se não for dono). “Fila do dia” na própria tela pede `?scope=day`.
 2. Card clicável (frente/verso) ocupa a coluna. Anterior e próximo ficam acima do card. O rótulo mostra a posição no deck (ou na fila do dia), com uma barra de progresso.
 3. Ratings aparecem após revelar o verso, com o intervalo previsto (duas colunas no celular, quatro no desktop). Chamam `PATCH /flashcards/:id/review` e recarregam a lista. No deck inteiro, a posição segue para o próximo card.
@@ -120,13 +142,25 @@ Sessão (`src/lib/auth.ts`):
 1. Dashboard (Estudos ou Concursos) → `/editais`.
 2. "Editais disponíveis" lista os editais oficiais com cargo, área, órgão, banca, ano e a contagem de disciplinas e tópicos. `BotaoInscricao` (`src/components/editais/`) chama `POST` ou `DELETE /editais-oficiais/:id/inscricao` e troca para "Inscrito" + Cancelar sem recarregar. Erro aparece sob o botão.
 3. `/editais/oficiais/[id]` mostra o cabeçalho, o mesmo botão e uma disciplina recolhível por linha (`<details>`), com a árvore de tópicos (`ArvoreTopicos`, compartilhado com `/disciplinas/[id]`). `404` mostra a mensagem.
-4. "Planilha própria", embaixo: formulário Banca, Cargo e Arquivo CSV chama `POST /editais/csv`. Erro da API, inclusive `503`, aparece em texto. Sem poll. A lista mostra cargo, banca e o link; vazia, não aparece.
-5. `/editais/[id]` mostra disciplinas e assuntos com teoria, revisão, questões e horas deste aluno. Zero, negativo e decimal aparecem como a API mandou. `404` mostra a mensagem. Sem editar, renomear ou apagar.
+4. O edital por CSV (step 15) saiu do front: sem formulário, sem `/editais/[id]`. As rotas `/editais` da API continuam por causa da sessão e do dashboard.
+
+### Importar editais (super_admin)
+1. Sidebar (Planejamento → Importar editais, só para super_admin) → `/editais/importar`.
+2. Arrastar ou escolher o arquivo (PDF, `.xlsx`, `.csv`, `.txt`). A importação entra na lista como "Lendo arquivo…" e a página faz poll a cada 4 s até virar "Para revisar" ou "Falhou" (com a mensagem). A nota diz se a leitura usou IA ou a heurística.
+3. "Revisar" abre `/editais/importar/[id]`: órgão, banca e ano; seletor de cargo quando há mais de um; cargo e área; resumo com cobertura e avisos.
+4. Cada disciplina tem o nome, "Disciplina do catálogo" (casar pelo nome, criar nova ou escolher uma existente) e a árvore editável (`ArvoreEditavel`): renomear, remover, adicionar tópico e subtópico até 4 níveis. Ponto verde = tópico que já existe no catálogo; contorno = novo. Depois de editar, a conferência some até "Salvar e conferir".
+5. "Publicar este cargo" salva o que estiver pendente, publica e mostra o link do edital. O cargo sai do seletor; sem cargo restante, a importação fica "Publicado". Sair com edição pendente pede confirmação do navegador.
+
+### Edital verticalizado
+1. Sidebar (Planejamento → Edital verticalizado) → `/verticalizado`, ou "Abrir verticalizado" no detalhe do edital inscrito.
+2. Abre o primeiro edital inscrito, ou o de `?edital=id`. Com mais de um, um seletor troca o edital. Sem inscrição, o vazio leva a `/editais`.
+3. Resumo no topo (teoria em %, tópicos com R1, questões e acerto) e uma disciplina recolhível por linha, com barra de teoria e acerto.
+4. Na tabela, Teoria, R1, R2 e R3 marcam hoje e mostram `dd/mm`; clicar de novo desmarca. Etapa fora de sequência fica desabilitada. Questões e Acertos salvam ao sair do campo ou com Enter. Cada salvamento chama `PUT` e troca o quadro pelo que a API devolve. Erro aparece fixo no topo e o número volta ao valor salvo.
 
 ### Disciplinas
 1. Sidebar (Planejamento → Disciplinas) → `/disciplinas`. O item fica ativo também em `/disciplinas/[id]`.
 2. A lista mostra nome e quantidade de tópicos. Sem catálogo carregado: “Ainda não há disciplina”. Erro da API, inclusive `503`, aparece em texto.
-3. `/disciplinas/[id]` mostra os tópicos em árvore, com os subtópicos recuados. `404` mostra a mensagem. Sem editar: o catálogo é carregado por SQL.
+3. `/disciplinas/[id]` mostra os tópicos em árvore, com os subtópicos recuados. `404` mostra a mensagem. Sem editar: o catálogo é carregado por SQL ou cresce pela importação de editais.
 
 ### Admins (super_admin)
 1. Lista / cria admins.

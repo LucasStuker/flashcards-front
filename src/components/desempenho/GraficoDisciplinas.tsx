@@ -43,7 +43,7 @@ export function GraficoRadar({ disciplinas }: { disciplinas: DesempenhoDisciplin
   return (
     <svg
       viewBox={`0 0 ${L} ${A}`}
-      className="mx-auto h-auto w-full max-w-xl"
+      className="mx-auto h-auto w-full max-w-sm"
       role="img"
       aria-label="Radar por disciplina. Os números estão na tabela abaixo."
     >
@@ -105,7 +105,7 @@ export function GraficoBarras({ disciplinas }: { disciplinas: DesempenhoDiscipli
   return (
     <ul className="flex flex-col gap-4">
       {disciplinas.map((d) => (
-        <li key={d.disciplina} className="grid gap-1.5 sm:grid-cols-[12rem_minmax(0,1fr)] sm:items-center sm:gap-4">
+        <li key={d.disciplina} className="grid gap-1.5">
           <p className="truncate text-sm text-ink" title={d.disciplina}>
             {d.disciplina}
             {d.poucosDados ? <span className="ml-1.5 text-[12px] text-muted">poucos dados</span> : null}

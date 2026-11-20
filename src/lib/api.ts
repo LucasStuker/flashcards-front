@@ -113,7 +113,9 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   }
 
   if (res.status === 204) return undefined as T;
-  return res.json() as Promise<T>;
+  const text = await res.text();
+  if (!text) return null as T;
+  return JSON.parse(text) as T;
 }
 
 export async function login(email: string, password: string) {
@@ -204,51 +206,6 @@ export async function uploadPdf(file: File) {
   });
 }
 
-export type AssuntoEdital = {
-  id: number;
-  nome: string;
-  teoria: number;
-  revisao: number;
-  questoes: number;
-  horas: number;
-};
-
-export type DisciplinaEdital = {
-  id: number;
-  nome: string;
-  assuntos: AssuntoEdital[];
-};
-
-export type EditalResumo = {
-  id: number;
-  cargo: string;
-  status: "publicado";
-  banca: { id: number; nome: string };
-};
-
-export type Edital = EditalResumo & {
-  disciplinas: DisciplinaEdital[];
-};
-
-export function listEditais() {
-  return request<EditalResumo[]>("/editais");
-}
-
-export function getEdital(id: number) {
-  return request<Edital>(`/editais/${id}`);
-}
-
-export function uploadEditalCsv(arquivo: File, banca: string, cargo: string) {
-  const form = new FormData();
-  form.append("arquivo", arquivo);
-  form.append("banca", banca);
-  form.append("cargo", cargo);
-  return request<Edital>("/editais/csv", {
-    method: "POST",
-    body: form,
-  });
-}
-
 export type DisciplinaResumo = {
   id: number;
   nome: string;
@@ -307,9 +264,149 @@ export function cancelarInscricaoEdital(id: number) {
   return request<void>(`/editais-oficiais/${id}/inscricao`, { method: "DELETE" });
 }
 
+export type ProgressoTopico = {
+  teoriaEm: string | null;
+  revisao1Em: string | null;
+  revisao2Em: string | null;
+  revisao3Em: string | null;
+  questoes: number;
+  acertos: number;
+};
+
+export type ResumoProgresso = {
+  topicos: number;
+  teoria: number;
+  revisados: number;
+  questoes: number;
+  acertos: number;
+  taxa: number | null;
+};
+
+export type TopicoVerticalizado = {
+  id: number;
+  nome: string;
+  /** `null` em tópico com subtópicos: o progresso fica nas folhas. */
+  progresso: ProgressoTopico | null;
+  resumo: ResumoProgresso;
+  filhos: TopicoVerticalizado[];
+};
+
+export type Verticalizado = Omit<EditalOficialResumo, "disciplinas" | "topicos"> & {
+  resumo: ResumoProgresso;
+  disciplinas: { id: number; nome: string; resumo: ResumoProgresso; topicos: TopicoVerticalizado[] }[];
+};
+
+export function getVerticalizado(editalId: number) {
+  return request<Verticalizado>(`/editais-oficiais/${editalId}/verticalizado`);
+}
+
+export function salvarProgressoTopico(editalId: number, topicoId: number, progresso: ProgressoTopico) {
+  return request<Verticalizado>(`/editais-oficiais/${editalId}/verticalizado/topicos/${topicoId}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(progresso),
+  });
+}
+
+export type StatusImportacao = "processando" | "rascunho" | "publicado" | "erro";
+
+export type NoExtraido = { nome: string; filhos: NoExtraido[] };
+
+export type DisciplinaExtraida = {
+  nome: string;
+  /** Id do catálogo, `null` para criar nova; sem a chave, a API casa pelo nome. */
+  casarCom?: number | null;
+  topicos: NoExtraido[];
+};
+
+export type CargoExtraido = {
+  cargo: string;
+  area: string | null;
+  disciplinas: DisciplinaExtraida[];
+};
+
+export type RascunhoEdital = {
+  orgao: string;
+  banca: string;
+  ano: number | null;
+  cargos: CargoExtraido[];
+};
+
+export type ImportacaoResumo = {
+  id: number;
+  arquivo: string;
+  status: StatusImportacao;
+  nota: string | null;
+  itensNoTexto: number | null;
+  editalId: number | null;
+  criadoEm: string;
+  orgao: string | null;
+  cargos: number;
+};
+
+export type NoPrevia = { nome: string; topicoId: number | null; filhos: NoPrevia[] };
+
+export type PreviaCargo = {
+  previa: {
+    disciplinas: {
+      nome: string;
+      disciplinaId: number | null;
+      disciplinaNome: string | null;
+      topicos: NoPrevia[];
+    }[];
+  };
+  resumo: {
+    disciplinas: number;
+    topicos: number;
+    novos: number;
+    reaproveitados: number;
+    cobertura: number | null;
+    avisos: string[];
+  };
+};
+
+export type ImportacaoDetalhe = Omit<ImportacaoResumo, "orgao" | "cargos"> & {
+  rascunho: RascunhoEdital | null;
+  cargos: PreviaCargo[];
+};
+
+export function listImportacoes() {
+  return request<ImportacaoResumo[]>("/importacoes-edital");
+}
+
+export function enviarArquivoEdital(file: File) {
+  const form = new FormData();
+  form.append("file", file);
+  return request<ImportacaoResumo>("/importacoes-edital", { method: "POST", body: form });
+}
+
+export function getImportacao(id: number) {
+  return request<ImportacaoDetalhe>(`/importacoes-edital/${id}`);
+}
+
+export function salvarRascunhoEdital(id: number, rascunho: RascunhoEdital) {
+  return request<ImportacaoDetalhe>(`/importacoes-edital/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(rascunho),
+  });
+}
+
+export function publicarImportacao(id: number, cargo: number) {
+  return request<{ editalId: number }>(`/importacoes-edital/${id}/publicar`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ cargo }),
+  });
+}
+
+export function descartarImportacao(id: number) {
+  return request<void>(`/importacoes-edital/${id}`, { method: "DELETE" });
+}
+
 export async function listDisciplinasDosEditais() {
-  const editais = await listEditais();
-  const detalhes = await Promise.all(editais.map((edital) => getEdital(edital.id)));
+  const editais = (await listEditaisOficiais()).filter((edital) => edital.inscrito);
+  const detalhes = await Promise.all(editais.map((edital) => getEditalOficial(edital.id)));
   const nomes = new Set<string>();
   for (const edital of detalhes) {
     for (const disciplina of edital.disciplinas) nomes.add(disciplina.nome);
@@ -375,11 +472,163 @@ export function getDesempenhoDisciplinas(dias: PeriodoDesempenho) {
   return request<DesempenhoDisciplinas>(`/desempenho/disciplinas?dias=${dias}`);
 }
 
+export type CorMateria = 1 | 2 | 3 | 4 | 5 | 6;
+
+export type MateriaCronograma = {
+  id: string;
+  nome: string;
+  cor: CorMateria;
+};
+
+export type ModoSessao = "teoria" | "questoes" | "revisao" | "misto";
+
+export type BlocoEstudo = {
+  id: string;
+  materiaId: string;
+  dia: string;
+  inicioMin: number;
+  fimMin: number;
+  modo: ModoSessao;
+};
+
+export type NovoBloco = Omit<BlocoEstudo, "id">;
+
+export type SlotLivre = {
+  weekday: number;
+  inicioMin: number;
+  fimMin: number;
+};
+
+export function getDisponibilidadeCronograma() {
+  return request<{ slots: SlotLivre[] }>("/cronograma/disponibilidade");
+}
+
+export function salvarDisponibilidadeCronograma(slots: SlotLivre[]) {
+  return request<{ slots: SlotLivre[] }>("/cronograma/disponibilidade", {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ slots }),
+  });
+}
+
+export function listMateriasCronograma(editalId?: number) {
+  const q = editalId != null ? `?editalId=${editalId}` : "";
+  return request<MateriaCronograma[]>(`/cronograma/materias${q}`);
+}
+
+export function listBlocosCronograma(inicio: string, fim: string) {
+  return request<BlocoEstudo[]>(
+    `/cronograma/blocos?inicio=${encodeURIComponent(inicio)}&fim=${encodeURIComponent(fim)}`,
+  );
+}
+
+export function criarBlocoCronograma(novo: NovoBloco) {
+  return request<BlocoEstudo>("/cronograma/blocos", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(novo),
+  });
+}
+
+export function atualizarBlocoCronograma(id: string, mudancas: Partial<NovoBloco>) {
+  return request<BlocoEstudo>(`/cronograma/blocos/${id}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(mudancas),
+  });
+}
+
+export function removerBlocoCronograma(id: string) {
+  return request<{ ok: true }>(`/cronograma/blocos/${id}`, { method: "DELETE" });
+}
+
+export function gerarCronogramaSemana(segunda: string, editalId?: number) {
+  return request<{
+    materias: MateriaCronograma[];
+    blocos: BlocoEstudo[];
+    semanaPlano?: { titulo: string; resumo: string; fase: string } | null;
+  }>("/cronograma/gerar", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ segunda, ...(editalId != null ? { editalId } : {}) }),
+  });
+}
+
+export type SemanaPlanoCronograma = {
+  indice: number;
+  segunda: string;
+  fase: "base" | "intensivo" | "revisao";
+  titulo: string;
+  resumo: string;
+  pesos: Record<string, number>;
+};
+
+export type PlanoCronograma = {
+  id: string;
+  editalId: number;
+  dataProva: string | null;
+  segundaInicio: string;
+  justificativa: string;
+  metodo: "openai" | "heuristic";
+  generationNote: string | null;
+  semanas: SemanaPlanoCronograma[];
+};
+
+export type NivelDominio = "fraco" | "ok" | "forte";
+export type FocoEstudo = "teoria" | "questoes" | "revisao";
+
+export type ItemAutoavaliacao = {
+  materiaId: string;
+  dominio: NivelDominio;
+  foco?: FocoEstudo;
+};
+
+export function getAutoavaliacaoCronograma(editalId?: number) {
+  const q = editalId != null ? `?editalId=${editalId}` : "";
+  return request<{ editalId: number; itens: ItemAutoavaliacao[] }>(
+    `/cronograma/autoavaliacao${q}`,
+  );
+}
+
+export function salvarAutoavaliacaoCronograma(
+  editalId: number,
+  itens: ItemAutoavaliacao[],
+) {
+  return request<{ editalId: number; itens: ItemAutoavaliacao[] }>(
+    "/cronograma/autoavaliacao",
+    {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ editalId, itens }),
+    },
+  );
+}
+
+export function getPlanoCronograma() {
+  return request<PlanoCronograma | null>("/cronograma/plano");
+}
+
+export function criarPlanoCronograma(data: {
+  editalId?: number;
+  dataProva?: string | null;
+  segunda?: string;
+}) {
+  return request<{
+    plano: PlanoCronograma;
+    materias: MateriaCronograma[];
+    blocos: BlocoEstudo[];
+  }>("/cronograma/plano", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+}
+
 export type Sessao = {
   id: string;
   disciplina: string;
   editalId: number | null;
-  linhaId: number | null;
+  topicoId: number | null;
   status: "aberta" | "concluida";
   iniciadaEm: string;
   rodandoDesde: string | null;
@@ -388,7 +637,15 @@ export type Sessao = {
   acertos: number;
 };
 
-export function iniciarSessao(data: { disciplina: string; editalId?: number; linhaId?: number }) {
+export function sessaoAberta() {
+  return request<Sessao | null>("/sessoes/aberta");
+}
+
+export function iniciarSessao(data: {
+  disciplina: string;
+  editalId?: number;
+  topicoId?: number;
+}) {
   return request<Sessao>("/sessoes", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
