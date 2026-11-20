@@ -1,7 +1,8 @@
 "use client";
 
 import { DragEvent, KeyboardEvent, MouseEvent, PointerEvent, useEffect, useMemo, useRef, useState } from "react";
-import type { BlocoEstudo, Materia, NovoBloco } from "@/lib/cronograma-mock";
+import type { BlocoEstudo, MateriaCronograma, NovoBloco } from "@/lib/api";
+import { rotuloModo } from "./modos";
 import { corDaMateria } from "./cores";
 import {
   ALTURA_HORA,
@@ -25,7 +26,7 @@ import type { Arrasto } from "./useCronograma";
 type Props = {
   dias: string[];
   blocos: BlocoEstudo[];
-  porId: Map<string, Materia>;
+  porId: Map<string, MateriaCronograma>;
   materiaSelecionada: string | null;
   blocoSelecionado: string | null;
   arrasto: Arrasto | null;
@@ -110,7 +111,9 @@ export function VisaoSemana({
     evento.preventDefault();
     if (!arrasto) return;
     const horario = horarioDoArrasto(minutoNoPonto(evento));
-    if (arrasto.tipo === "materia") onCriar({ materiaId: arrasto.materiaId, dia, ...horario });
+    if (arrasto.tipo === "materia") {
+      onCriar({ materiaId: arrasto.materiaId, dia, modo: "misto", ...horario });
+    }
     else onAtualizar(arrasto.blocoId, { dia, ...horario });
     setPrevia(null);
     onArrasto(null);
@@ -122,7 +125,12 @@ export function VisaoSemana({
       onSelecionarBloco(null);
       return;
     }
-    onCriar({ materiaId: materiaSelecionada, dia, ...horarioParaMateria(minutoNoPonto(evento)) });
+    onCriar({
+      materiaId: materiaSelecionada,
+      dia,
+      modo: "misto",
+      ...horarioParaMateria(minutoNoPonto(evento)),
+    });
   }
 
   function iniciarRedimensionamento(bloco: BlocoEstudo, evento: PointerEvent<HTMLDivElement>) {
@@ -229,7 +237,7 @@ export function VisaoSemana({
                       role="button"
                       tabIndex={0}
                       draggable
-                      aria-label={`${nome}, ${formatHora(bloco.inicioMin)} às ${formatHora(fimMin)}`}
+                      aria-label={`${nome}, ${rotuloModo(bloco.modo)}, ${formatHora(bloco.inicioMin)} às ${formatHora(fimMin)}`}
                       aria-pressed={selecionado}
                       onDragStart={(evento) => {
                         if (redimensionamento.current) {
@@ -272,8 +280,8 @@ export function VisaoSemana({
                     >
                       <p className="truncate font-medium text-ink">{nome}</p>
                       {altura >= 34 ? (
-                        <p className="truncate tabular-nums text-muted">
-                          {formatHora(bloco.inicioMin)} – {formatHora(fimMin)}
+                        <p className="truncate text-muted">
+                          {rotuloModo(bloco.modo)} · {formatHora(bloco.inicioMin)} – {formatHora(fimMin)}
                         </p>
                       ) : null}
                       <div

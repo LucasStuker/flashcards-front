@@ -1,4 +1,4 @@
-import type { CorMateria } from "@/lib/cronograma-mock";
+import type { CorMateria } from "@/lib/api";
 
 /** Classes completas por cor: o Tailwind só gera o que aparece literal no código. */
 export const corDaMateria: Record<CorMateria, { ponto: string; bloco: string; borda: string; texto: string }> = {

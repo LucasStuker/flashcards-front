@@ -2,14 +2,15 @@
 
 import { GripVertical, Trash2, X } from "lucide-react";
 import { useMemo } from "react";
-import type { BlocoEstudo, Materia, NovoBloco } from "@/lib/cronograma-mock";
+import type { BlocoEstudo, MateriaCronograma, NovoBloco } from "@/lib/api";
 import { focusRing } from "@/components/ui";
 import { corDaMateria } from "./cores";
 import { MIN_FIM, MIN_INICIO, PASSO_MIN, formatDuracaoMin, formatHora } from "./datas";
+import { MODOS_SESSAO } from "./modos";
 import type { Arrasto } from "./useCronograma";
 
 type Props = {
-  materias: Materia[];
+  materias: MateriaCronograma[];
   blocos: BlocoEstudo[];
   materiaSelecionada: string | null;
   onSelecionarMateria: (id: string | null) => void;
@@ -111,7 +112,7 @@ function BlocoEditor({
   onFechar,
 }: {
   bloco: BlocoEstudo;
-  materias: Materia[];
+  materias: MateriaCronograma[];
   onAtualizar: (id: string, mudancas: Partial<NovoBloco>) => void;
   onRemover: (id: string) => void;
   onFechar: () => void;
@@ -142,6 +143,24 @@ function BlocoEditor({
             {materias.map((m) => (
               <option key={m.id} value={m.id}>
                 {m.nome}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="flex flex-col gap-1 text-[12px] font-medium text-muted">
+          Modo da sessão
+          <select
+            className={campo}
+            value={bloco.modo ?? "misto"}
+            onChange={(e) =>
+              onAtualizar(bloco.id, {
+                modo: e.target.value as BlocoEstudo["modo"],
+              })
+            }
+          >
+            {MODOS_SESSAO.map((m) => (
+              <option key={m.valor} value={m.valor}>
+                {m.label}
               </option>
             ))}
           </select>
