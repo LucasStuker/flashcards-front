@@ -70,8 +70,7 @@ const groups: NavGroup[] = [
         label: "Concursos",
         icon: "target",
         href: "/editais",
-        isActive: (p) =>
-          p === "/editais" || (p.startsWith("/editais/") && !p.startsWith("/editais/importar")),
+        isActive: (p) => p === "/editais" || p.startsWith("/editais/"),
       },
       {
         label: "Edital verticalizado",
@@ -84,13 +83,6 @@ const groups: NavGroup[] = [
         icon: "folder",
         href: "/disciplinas",
         isActive: (p) => p === "/disciplinas" || p.startsWith("/disciplinas/"),
-      },
-      {
-        label: "Importar editais",
-        icon: "upload",
-        href: "/editais/importar",
-        isActive: (p) => p.startsWith("/editais/importar"),
-        superAdmin: true,
       },
     ],
   },
