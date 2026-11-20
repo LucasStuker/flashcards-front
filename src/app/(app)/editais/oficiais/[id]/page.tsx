@@ -75,12 +75,20 @@ export default function EditalOficialPage() {
                 {edital.orgao} · {edital.banca} · {edital.ano}
               </p>
             </div>
-            <BotaoInscricao
-              editalId={edital.id}
-              cargo={edital.cargo}
-              inscrito={edital.inscrito}
-              onChange={(inscrito) => setEdital({ ...edital, inscrito })}
-            />
+            <div className="flex flex-col items-end gap-2">
+              <BotaoInscricao
+                editalId={edital.id}
+                cargo={edital.cargo}
+                inscrito={edital.inscrito}
+                onChange={(inscrito) => setEdital({ ...edital, inscrito })}
+              />
+              {edital.inscrito ? (
+                <Link href={`/verticalizado?edital=${edital.id}`} className={`text-[13px] ${linkAcao}`}>
+                  Abrir verticalizado
+                  <NavIcon name="chevron-right" className="h-3.5 w-3.5" />
+                </Link>
+              ) : null}
+            </div>
           </div>
 
           <Bloco

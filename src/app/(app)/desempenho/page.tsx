@@ -67,7 +67,7 @@ export default function DesempenhoPage() {
   const modoEfetivo = radarPossivel ? modo : "barras";
 
   return (
-    <PageContainer maxWidth="wide">
+    <PageContainer maxWidth="full">
       <header>
         <h1 className="font-display text-2xl font-semibold tracking-tight text-ink">Desempenho</h1>
         <p className="mt-0.5 text-[13px] text-muted">
@@ -184,8 +184,8 @@ export default function DesempenhoPage() {
               texto="Ligue um deck a uma disciplina em Decks → Editar, ou conclua uma sessão de estudo."
             />
           ) : (
-            <>
-              <div className="flex flex-col gap-4 px-4 py-4">
+            <div className="grid items-start gap-0 lg:grid-cols-[minmax(18rem,22rem)_minmax(0,1fr)]">
+              <div className="flex flex-col gap-3 border-b border-line px-4 py-4 lg:border-r lg:border-b-0">
                 <Legenda />
                 {!radarPossivel ? (
                   <p className="text-[12px] text-muted">Radar a partir de 3 disciplinas.</p>
@@ -197,7 +197,7 @@ export default function DesempenhoPage() {
                 )}
               </div>
               <TabelaDisciplinas dados={porDisciplina.dados} />
-            </>
+            </div>
           )}
         </div>
       </Bloco>

@@ -1,20 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { PageContainer } from "@/components/PageContainer";
 import { Bloco, EstadoVazio } from "@/components/dashboard/Bloco";
 import { BotaoInscricao } from "@/components/editais/BotaoInscricao";
-import { alertaErro, botaoPrimario, focusRing, linkAcao } from "@/components/ui";
-import {
-  EditalOficialResumo,
-  EditalResumo,
-  listEditais,
-  listEditaisOficiais,
-  uploadEditalCsv,
-} from "@/lib/api";
-
-const campo = `rounded-md border border-line bg-white px-3 py-2 outline-none focus:border-accent ${focusRing}`;
+import { alertaErro, linkAcao } from "@/components/ui";
+import { EditalOficialResumo, listEditaisOficiais } from "@/lib/api";
 
 export default function EditaisPage() {
   return (
@@ -27,7 +19,6 @@ export default function EditaisPage() {
         </p>
       </div>
       <EditaisDisponiveis />
-      <PlanilhaPropria />
     </PageContainer>
   );
 }
@@ -125,146 +116,6 @@ function EditaisDisponiveis() {
           ))}
         </ul>
       ) : null}
-    </Bloco>
-  );
-}
-
-function PlanilhaPropria() {
-  const [editais, setEditais] = useState<EditalResumo[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [sending, setSending] = useState(false);
-  const [listError, setListError] = useState<string | null>(null);
-  const [formError, setFormError] = useState<string | null>(null);
-  const [notice, setNotice] = useState<string | null>(null);
-  const [fileName, setFileName] = useState<string | null>(null);
-  const fileRef = useRef<HTMLInputElement>(null);
-
-  const refresh = useCallback(async () => {
-    try {
-      const data = await listEditais();
-      setEditais(data);
-      setListError(null);
-    } catch (err) {
-      setListError(err instanceof Error ? err.message : "Falha ao carregar editais");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    void refresh();
-  }, [refresh]);
-
-  async function onSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const form = event.currentTarget;
-    const banca = String(new FormData(form).get("banca") ?? "");
-    const cargo = String(new FormData(form).get("cargo") ?? "");
-    const arquivo = fileRef.current?.files?.[0];
-    if (!arquivo) {
-      setNotice(null);
-      setFormError("Envie um CSV");
-      return;
-    }
-
-    setSending(true);
-    setFormError(null);
-    setNotice(null);
-    try {
-      await uploadEditalCsv(arquivo, banca, cargo);
-      form.reset();
-      setFileName(null);
-      setNotice("Edital publicado.");
-      await refresh();
-    } catch (err) {
-      setFormError(err instanceof Error ? err.message : "Falha ao enviar CSV");
-    } finally {
-      setSending(false);
-    }
-  }
-
-  return (
-    <Bloco id="planilha-propria-heading" titulo="Planilha própria">
-      <div className="flex flex-col gap-4 p-4">
-        <p className="text-[13px] text-muted">
-          Não achou o seu concurso? Envie um CSV com disciplinas e assuntos para montar um edital só
-          seu.
-        </p>
-
-        <form onSubmit={onSubmit} className="grid gap-3 sm:grid-cols-2">
-          <label className="flex flex-col gap-1 text-sm">
-            <span>Banca</span>
-            <input name="banca" required disabled={sending} className={campo} />
-          </label>
-          <label className="flex flex-col gap-1 text-sm">
-            <span>Cargo</span>
-            <input name="cargo" required disabled={sending} className={campo} />
-          </label>
-          <label className="flex flex-col gap-1 text-sm sm:col-span-2">
-            <span>Arquivo CSV</span>
-            <span className="inline-flex w-fit cursor-pointer rounded-md border border-line bg-paper px-3 py-1.5 text-ink focus-within:outline-2 focus-within:outline-accent">
-              {fileName ?? "Escolher arquivo"}
-              <input
-                ref={fileRef}
-                name="arquivo"
-                type="file"
-                accept=".csv,text/csv"
-                required
-                disabled={sending}
-                className="sr-only"
-                onChange={(event) => setFileName(event.target.files?.[0]?.name ?? null)}
-              />
-            </span>
-          </label>
-          <button
-            type="submit"
-            disabled={sending}
-            className={`w-fit disabled:opacity-60 ${botaoPrimario}`}
-          >
-            {sending ? "Enviando…" : "Enviar CSV"}
-          </button>
-        </form>
-
-        {formError ? (
-          <p role="alert" className={alertaErro}>
-            {formError}
-          </p>
-        ) : null}
-
-        {listError ? (
-          <p role="alert" className={alertaErro}>
-            {listError}
-          </p>
-        ) : null}
-
-        {notice ? (
-          <p role="status" className="text-sm text-ok">
-            {notice}
-          </p>
-        ) : null}
-
-        {loading ? (
-          <p className="text-sm text-muted" aria-live="polite">
-            Carregando…
-          </p>
-        ) : null}
-
-        {editais.length > 0 ? (
-          <ul className="rounded-md border border-line text-sm">
-            {editais.map((edital) => (
-              <li
-                key={edital.id}
-                className="flex items-center justify-between gap-3 border-b border-line px-3 py-2 last:border-0"
-              >
-                <Link href={`/editais/${edital.id}`} className={linkAcao}>
-                  {edital.cargo}
-                </Link>
-                <span className="text-[13px] text-muted">{edital.banca.nome}</span>
-              </li>
-            ))}
-          </ul>
-        ) : null}
-      </div>
     </Bloco>
   );
 }

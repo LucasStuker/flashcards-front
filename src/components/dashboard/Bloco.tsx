@@ -21,7 +21,7 @@ export function Bloco({ id, titulo, acao, className = "", children }: BlocoProps
         </h2>
         {acao}
       </header>
-      <div className="flex-1">{children}</div>
+      <div>{children}</div>
     </section>
   );
 }
