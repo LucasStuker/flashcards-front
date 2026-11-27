@@ -50,15 +50,13 @@ Nest API http://localhost:3001
 | `/desempenho` | `src/app/(app)/desempenho/page.tsx` | Semana por dia (tempo, questões, acerto) e comparação por disciplina (step 20) |
 | `/editais` | `src/app/(app)/editais/page.tsx` | Editais disponíveis com inscrição (step 21, auth) |
 | `/editais/oficiais/[id]` | `src/app/(app)/editais/oficiais/[id]/page.tsx` | Edital oficial: cabeçalho, inscrição e conteúdo programático (auth) |
-| `/editais/importar` | `src/app/(app)/editais/importar/page.tsx` | Upload do arquivo do edital e lista de importações, com poll em `processando` (step 23, só super_admin) |
-| `/editais/importar/[id]` | `src/app/(app)/editais/importar/[id]/page.tsx` | Revisão do rascunho extraído e publicação por cargo (step 23, só super_admin) |
 | `/verticalizado` | `src/app/(app)/verticalizado/page.tsx` | Edital verticalizado do edital inscrito (`?edital=id`): teoria, R1–R3 e questões por tópico (step 22, auth) |
 | `/disciplinas` | `src/app/(app)/disciplinas/page.tsx` | Catálogo de disciplinas, com a quantidade de tópicos (auth) |
 | `/disciplinas/[id]` | `src/app/(app)/disciplinas/[id]/page.tsx` | Árvore de tópicos da disciplina, só leitura (auth) |
 | `/account` | `src/app/(app)/account/page.tsx` | Nome e troca da própria senha |
 | `/users` | `src/app/(app)/users/page.tsx` | CRUD admins (só super_admin) |
 
-Layout global: `src/app/layout.tsx` (metadata, fontes, CSS). Layout autenticado: `src/app/(app)/layout.tsx` (`AuthGate`, `Sidebar`, `<main>` com rolagem). `/users` e `/editais/importar` têm `layout.tsx` com `AuthGate requireSuperAdmin`. As URLs não incluem `(app)`.
+Layout global: `src/app/layout.tsx` (metadata, fontes, CSS). Layout autenticado: `src/app/(app)/layout.tsx` (`AuthGate`, `Sidebar`, `<main>` com rolagem). `/users` tem `layout.tsx` com `AuthGate requireSuperAdmin`. As URLs não incluem `(app)`.
 
 ## Camada de API (`src/lib/api.ts`)
 
@@ -75,7 +73,6 @@ Tipos e funções:
 - `listDisciplinas()`, `getDisciplina(id)` — catálogo do step 18; tipos `DisciplinaResumo`, `Disciplina` e `Topico` (com `filhos`)
 - `listEditaisOficiais()`, `getEditalOficial(id)`, `inscreverEdital(id)`, `cancelarInscricaoEdital(id)` — step 21; tipos `EditalOficialResumo` (com contagens) e `EditalOficial` (disciplinas com a árvore de tópicos)
 - `getVerticalizado(editalId)`, `salvarProgressoTopico(editalId, topicoId, progresso)` — step 22; tipos `Verticalizado`, `TopicoVerticalizado`, `ProgressoTopico` e `ResumoProgresso`. O `PUT` devolve o quadro inteiro já somado
-- `listImportacoes()`, `enviarArquivoEdital(file)`, `getImportacao(id)`, `salvarRascunhoEdital(id, rascunho)`, `publicarImportacao(id, cargo)`, `descartarImportacao(id)` — step 23; tipos `ImportacaoResumo`, `ImportacaoDetalhe`, `RascunhoEdital` (cargos → disciplinas com `casarCom?` → `NoExtraido`) e `PreviaCargo`
 - `getDashboard()` — `GET /dashboard`; tipo `Dashboard` (hoje só `resumo`)
 - Sessão de estudo (step 24): `sessaoAberta()`, `iniciarSessao({ disciplina, editalId?, topicoId? })`, `pausarSessao(id)`, `retomarSessao(id)`, `concluirSessao(id, { questoes, acertos })`, `descartarSessao(id)`. Tela `/estudo`
 
@@ -142,14 +139,7 @@ Sessão (`src/lib/auth.ts`):
 1. Dashboard (Estudos ou Concursos) → `/editais`.
 2. "Editais disponíveis" lista os editais oficiais com cargo, área, órgão, banca, ano e a contagem de disciplinas e tópicos. `BotaoInscricao` (`src/components/editais/`) chama `POST` ou `DELETE /editais-oficiais/:id/inscricao` e troca para "Inscrito" + Cancelar sem recarregar. Erro aparece sob o botão.
 3. `/editais/oficiais/[id]` mostra o cabeçalho, o mesmo botão e uma disciplina recolhível por linha (`<details>`), com a árvore de tópicos (`ArvoreTopicos`, compartilhado com `/disciplinas/[id]`). `404` mostra a mensagem.
-4. O edital por CSV (step 15) saiu do front: sem formulário, sem `/editais/[id]`. As rotas `/editais` da API continuam por causa da sessão e do dashboard.
-
-### Importar editais (super_admin)
-1. Sidebar (Planejamento → Importar editais, só para super_admin) → `/editais/importar`.
-2. Arrastar ou escolher o arquivo (PDF, `.xlsx`, `.csv`, `.txt`). A importação entra na lista como "Lendo arquivo…" e a página faz poll a cada 4 s até virar "Para revisar" ou "Falhou" (com a mensagem). A nota diz se a leitura usou IA ou a heurística.
-3. "Revisar" abre `/editais/importar/[id]`: órgão, banca e ano; seletor de cargo quando há mais de um; cargo e área; resumo com cobertura e avisos.
-4. Cada disciplina tem o nome, "Disciplina do catálogo" (casar pelo nome, criar nova ou escolher uma existente) e a árvore editável (`ArvoreEditavel`): renomear, remover, adicionar tópico e subtópico até 4 níveis. Ponto verde = tópico que já existe no catálogo; contorno = novo. Depois de editar, a conferência some até "Salvar e conferir".
-5. "Publicar este cargo" salva o que estiver pendente, publica e mostra o link do edital. O cargo sai do seletor; sem cargo restante, a importação fica "Publicado". Sair com edição pendente pede confirmação do navegador.
+4. Editais oficiais vêm do seed SQL na API (step 31); não há importação pelo front.
 
 ### Edital verticalizado
 1. Sidebar (Planejamento → Edital verticalizado) → `/verticalizado`, ou "Abrir verticalizado" no detalhe do edital inscrito.
@@ -160,7 +150,7 @@ Sessão (`src/lib/auth.ts`):
 ### Disciplinas
 1. Sidebar (Planejamento → Disciplinas) → `/disciplinas`. O item fica ativo também em `/disciplinas/[id]`.
 2. A lista mostra nome e quantidade de tópicos. Sem catálogo carregado: “Ainda não há disciplina”. Erro da API, inclusive `503`, aparece em texto.
-3. `/disciplinas/[id]` mostra os tópicos em árvore, com os subtópicos recuados. `404` mostra a mensagem. Sem editar: o catálogo é carregado por SQL ou cresce pela importação de editais.
+3. `/disciplinas/[id]` mostra os tópicos em árvore, com os subtópicos recuados. `404` mostra a mensagem. Sem editar: o catálogo é carregado por SQL na API.
 
 ### Admins (super_admin)
 1. Lista / cria admins.
