@@ -1,8 +1,9 @@
 "use client";
 
 import { DragEvent, useMemo, useState } from "react";
-import type { BlocoEstudo, Materia, NovoBloco } from "@/lib/cronograma-mock";
+import type { BlocoEstudo, MateriaCronograma, NovoBloco } from "@/lib/api";
 import { corDaMateria } from "./cores";
+import { rotuloModo } from "./modos";
 import { DURACAO_PADRAO, MIN_FIM, formatHora, hoje, mesmoMes, numeroDoDia } from "./datas";
 import type { Arrasto } from "./useCronograma";
 
@@ -10,7 +11,7 @@ type Props = {
   referencia: string;
   dias: string[];
   blocos: BlocoEstudo[];
-  porId: Map<string, Materia>;
+  porId: Map<string, MateriaCronograma>;
   materiaSelecionada: string | null;
   blocoSelecionado: string | null;
   arrasto: Arrasto | null;
@@ -63,7 +64,12 @@ export function VisaoMes({
     if (!arrasto) return;
     const doDia = porDia.get(dia) ?? [];
     if (arrasto.tipo === "materia") {
-      onCriar({ materiaId: arrasto.materiaId, dia, ...primeiroHorarioLivre(doDia, DURACAO_PADRAO) });
+      onCriar({
+        materiaId: arrasto.materiaId,
+        dia,
+        modo: "misto",
+        ...primeiroHorarioLivre(doDia, DURACAO_PADRAO),
+      });
     } else {
       onAtualizar(arrasto.blocoId, { dia });
     }
@@ -75,7 +81,12 @@ export function VisaoMes({
       onAbrirSemana(dia);
       return;
     }
-    onCriar({ materiaId: materiaSelecionada, dia, ...primeiroHorarioLivre(porDia.get(dia) ?? [], DURACAO_PADRAO) });
+    onCriar({
+      materiaId: materiaSelecionada,
+      dia,
+      modo: "misto",
+      ...primeiroHorarioLivre(porDia.get(dia) ?? [], DURACAO_PADRAO),
+    });
   }
 
   return (
@@ -155,7 +166,9 @@ export function VisaoMes({
                   >
                     <span aria-hidden="true" className={`h-1.5 w-1.5 shrink-0 rounded-full ${cor.ponto}`} />
                     <span className="shrink-0 tabular-nums text-muted">{formatHora(bloco.inicioMin)}</span>
-                    <span className="truncate text-ink">{materia?.nome ?? "Matéria removida"}</span>
+                    <span className="truncate text-ink">
+                      {materia?.nome ?? "Matéria removida"} · {rotuloModo(bloco.modo)}
+                    </span>
                   </button>
                 );
               })}
